@@ -242,12 +242,27 @@ namespace CMSUI.Controllers
                 .Select(c => new { c.Cateriaid, c.Nome })
                 .ToList();
 
+            // Perfil do tenant para personalizar o conteúdo gerado
+            var tenantApp = _context.Aplicacaos.FirstOrDefault(a => a.Aplicacaoid == claimAppId);
+            var tenantPerfil = new
+            {
+                nome_empresa  = tenantApp?.Nome ?? "aguardando informação",
+                descricao     = string.IsNullOrWhiteSpace(tenantApp?.Descricao)   ? "aguardando informação" : tenantApp.Descricao,
+                telefone      = string.IsNullOrWhiteSpace(tenantApp?.Telefone)    ? "aguardando informação" : tenantApp.Telefone,
+                endereco      = string.IsNullOrWhiteSpace(tenantApp?.Endereco)    ? "aguardando informação" : tenantApp.Endereco,
+                email_contato = string.IsNullOrWhiteSpace(tenantApp?.Mailuser)    ? "aguardando informação" : tenantApp.Mailuser,
+                instagram     = string.IsNullOrWhiteSpace(tenantApp?.Pageinstagram) ? "aguardando informação" : tenantApp.Pageinstagram,
+                facebook      = string.IsNullOrWhiteSpace(tenantApp?.Pagefacebook)  ? "aguardando informação" : tenantApp.Pagefacebook,
+                linkedin      = string.IsNullOrWhiteSpace(tenantApp?.Pagelinkedin)  ? "aguardando informação" : tenantApp.Pagelinkedin
+            };
+
             var contexto = new
             {
-                blocos_disponiveis = blocos,
-                areas_do_tenant = areas,
+                perfil_tenant         = tenantPerfil,
+                blocos_disponiveis    = blocos,
+                areas_do_tenant       = areas,
                 formularios_do_tenant = formularios,
-                categorias_do_tenant = categorias
+                categorias_do_tenant  = categorias
             };
 
             var areaNome = dto.Areaid != null
@@ -255,11 +270,13 @@ namespace CMSUI.Controllers
                 : null;
             var contextoArea = areaNome != null ? $" para a área \"{areaNome}\"" : "";
 
-            var prompt = $@"Você é um assistente de criação de páginas web.
+            var prompt = $@"Você é um especialista em design e criação de páginas web.
 O usuário quer criar uma página{contextoArea} com a seguinte descrição: ""{dto.Descricao}""
 
-Você tem acesso aos seguintes blocos disponíveis e dados do tenant:
+Dados do tenant e blocos disponíveis:
 {JsonSerializer.Serialize(contexto, new JsonSerializerOptions { WriteIndented = false })}
+
+IMPORTANTE sobre o perfil_tenant: use os dados reais do tenant para preencher o conteúdo dos blocos (nome da empresa, telefone, endereço etc.). Onde o valor for "aguardando informação", use esse texto literalmente como placeholder no conteúdo gerado.
 
 Retorne APENAS um JSON válido no seguinte formato, sem texto adicional, sem markdown, sem explicações:
 {{

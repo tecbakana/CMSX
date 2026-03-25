@@ -36,4 +36,20 @@ export class LoginComponent {
         }
       });
   }
+
+  loginDemo() {
+    this.erro = '';
+    this.carregando = true;
+    this.http.post<any>(this.baseUrl + 'auth/demo-login', {})
+      .subscribe({
+        next: (user) => {
+          sessionStorage.setItem('usuario', JSON.stringify(user));
+          window.location.href = '/';
+        },
+        error: () => {
+          this.erro = 'Tenant demo não disponível. Execute o script cmsxDB.tenant_demo.sql.';
+          this.carregando = false;
+        }
+      });
+  }
 }

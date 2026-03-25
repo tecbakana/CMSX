@@ -251,6 +251,10 @@
                 <span class="badge bg-light text-secondary ms-2 font-monospace" style="font-size:.7rem">{{ bloco.tipo }}</span>
               </div>
               <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" title="Editar conteúdo do bloco"
+                  (click)="abrirEditorBloco(i)">
+                  <i class="bi bi-pencil"></i>
+                </button>
                 <button class="btn btn-outline-secondary" title="Mover para cima"
                   (click)="moverBloco(i, 'up')" [disabled]="i === 0">
                   <i class="bi bi-arrow-up"></i>
@@ -279,6 +283,72 @@
           </div>
 
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: editor de bloco ─────────────────────────────────────── -->
+<div *ngIf="editandoIndex !== null" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil-square me-2 text-primary"></i>Editar bloco: <strong>{{ editandoNome }}</strong>
+        </h5>
+        <button type="button" class="btn-close" (click)="fecharEditorBloco()"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="camposSchema().length === 0" class="text-muted fst-italic">
+          Nenhum campo configurável para este bloco.
+        </div>
+        <div class="row g-3">
+          <ng-container *ngFor="let campo of camposSchema()">
+            <!-- boolean → checkbox -->
+            <div *ngIf="campo.type === 'boolean'" class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" [id]="'campo-' + campo.key"
+                  [(ngModel)]="editandoConfig[campo.key]">
+                <label class="form-check-label" [for]="'campo-' + campo.key">{{ campo.label }}</label>
+              </div>
+            </div>
+            <!-- textarea -->
+            <div *ngIf="campo.type === 'text' || campo.type === 'html'" class="col-12">
+              <label class="form-label form-label-sm">{{ campo.label }}</label>
+              <textarea class="form-control form-control-sm" rows="3"
+                [(ngModel)]="editandoConfig[campo.key]"
+                [placeholder]="campo.placeholder"></textarea>
+            </div>
+            <!-- color -->
+            <div *ngIf="campo.type === 'color'" class="col-md-4">
+              <label class="form-label form-label-sm">{{ campo.label }}</label>
+              <input type="color" class="form-control form-control-sm form-control-color w-100"
+                [(ngModel)]="editandoConfig[campo.key]">
+            </div>
+            <!-- number -->
+            <div *ngIf="campo.type === 'number'" class="col-md-4">
+              <label class="form-label form-label-sm">{{ campo.label }}</label>
+              <input type="number" class="form-control form-control-sm"
+                [(ngModel)]="editandoConfig[campo.key]"
+                [placeholder]="campo.placeholder">
+            </div>
+            <!-- string / url / demais -->
+            <div *ngIf="campo.type !== 'boolean' && campo.type !== 'text' && campo.type !== 'html' && campo.type !== 'color' && campo.type !== 'number'"
+              class="col-md-6">
+              <label class="form-label form-label-sm">{{ campo.label }}</label>
+              <input class="form-control form-control-sm"
+                [type]="campo.type === 'url' ? 'url' : 'text'"
+                [(ngModel)]="editandoConfig[campo.key]"
+                [placeholder]="campo.placeholder">
+            </div>
+          </ng-container>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" (click)="fecharEditorBloco()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" (click)="confirmarEdicaoBloco()">
+          <i class="bi bi-check-lg me-1"></i>Aplicar alterações
+        </button>
       </div>
     </div>
   </div>

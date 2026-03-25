@@ -16,6 +16,12 @@
           {{ carregando ? 'Entrando...' : 'Entrar' }}
         </button>
       </form>
+      <div class="d-flex align-items-center my-3">
+        <hr class="flex-grow-1"><span class="px-2 text-muted small">ou</span><hr class="flex-grow-1">
+      </div>
+      <button type="button" class="btn btn-outline-secondary w-100" (click)="loginDemo()" [disabled]="carregando">
+        <i class="bi bi-play-circle me-1"></i>Experimentar demo
+      </button>
       <p class="text-center mt-3 mb-0 text-muted small">
         Não tem conta? <a routerLink="/signup">Criar conta</a>
       </p>

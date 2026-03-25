@@ -23,6 +23,11 @@
           <a class="nav-link" [class.active]="abaAtiva==='redes'" (click)="abaAtiva='redes'" href="javascript:void(0)">Redes Sociais</a>
         </li>
         <li class="nav-item">
+          <a class="nav-link" [class.active]="abaAtiva==='perfil'" (click)="abaAtiva='perfil'" href="javascript:void(0)">
+            <i class="bi bi-building me-1"></i>Perfil da Empresa
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" [class.active]="abaAtiva==='integ'" (click)="abaAtiva='integ'" href="javascript:void(0)">Integrações</a>
         </li>
       </ul>
@@ -111,6 +116,35 @@
           <div class="col-md-4">
             <label class="form-label">Flickr</label>
             <input class="form-control" [(ngModel)]="selecionado.pageflicker">
+          </div>
+        </div>
+
+        <!-- ABA PERFIL DA EMPRESA -->
+        <div *ngIf="abaAtiva==='perfil'" class="row g-3">
+          <div class="col-12">
+            <div class="alert alert-info py-2 small mb-0">
+              <i class="bi bi-magic me-1"></i>
+              Estes dados são usados pelo <strong>Page Builder com IA</strong> para gerar conteúdo personalizado.
+              Campos em branco aparecem como <em>"aguardando informação"</em> nos blocos gerados.
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Descrição da empresa <small class="text-muted">(sobre, missão, produto)</small></label>
+            <textarea class="form-control" rows="4" [(ngModel)]="selecionado.descricao"
+              placeholder="Ex: Somos uma empresa de tecnologia especializada em soluções para pequenos negócios..."></textarea>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Telefone / WhatsApp</label>
+            <input class="form-control" [(ngModel)]="selecionado.telefone" placeholder="(11) 99999-9999">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">E-mail de contato</label>
+            <input class="form-control" [(ngModel)]="selecionado.mailuser" placeholder="contato@empresa.com">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Endereço</label>
+            <input class="form-control" [(ngModel)]="selecionado.endereco"
+              placeholder="Ex: Rua das Flores, 123 — Bairro, Cidade — SP">
           </div>
         </div>
 

@@ -300,6 +300,50 @@ export class PageBuilderComponent implements OnInit {
     });
   }
 
+  // ── Editor de bloco (modal) ───────────────────────────────────────────
+  editandoIndex: number | null = null;
+  editandoConfig: any = {};
+  editandoSchema: any = {};
+  editandoNome = '';
+
+  abrirEditorBloco(i: number) {
+    const bloco = this.layoutAtual[i];
+    const dict  = this.blocos.find(d => d.tipobloco === bloco.tipo);
+    try { this.editandoSchema = JSON.parse(dict?.schemaConfig ?? '{}'); } catch { this.editandoSchema = {}; }
+    this.editandoConfig = JSON.parse(JSON.stringify(bloco.config ?? {}));
+    this.editandoNome   = bloco._nome ?? bloco.tipo;
+    this.editandoIndex  = i;
+  }
+
+  fecharEditorBloco() {
+    this.editandoIndex = null;
+    this.editandoConfig = {};
+    this.editandoSchema = {};
+  }
+
+  confirmarEdicaoBloco() {
+    if (this.editandoIndex === null) return;
+    this.layoutAtual[this.editandoIndex].config = { ...this.editandoConfig };
+    this.fecharEditorBloco();
+  }
+
+  camposSchema(): { key: string; label: string; type: string; placeholder: string }[] {
+    return Object.entries(this.editandoSchema).map(([key, def]: [string, any]) => ({
+      key,
+      label:       def?.label       ?? key,
+      type:        def?.type        ?? 'string',
+      placeholder: def?.placeholder ?? def?.default ?? ''
+    }));
+  }
+
+  tipoInput(type: string): string {
+    if (type === 'color')   return 'color';
+    if (type === 'number')  return 'number';
+    if (type === 'boolean') return 'checkbox';
+    if (type === 'url')     return 'url';
+    return 'text';
+  }
+
   configVisual(bloco: BlocoLayout): { label: string; valor: string }[] {
     const dict = this.blocos.find(d => d.tipobloco === bloco.tipo);
     let schema: any = {};

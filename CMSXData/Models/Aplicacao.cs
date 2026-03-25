@@ -60,4 +60,12 @@ public partial class Aplicacao
     public Guid Aplicacaoid { get; set; }
 
     public bool? Isactive { get; set; }
+
+    // Perfil público do tenant (usado pela IA do Page Builder)
+    public string? Telefone { get; set; }
+    public string? Endereco { get; set; }
+    public string? Descricao { get; set; }
+
+    // Indica tenant de demonstração (dados resetados a cada login)
+    public bool IsDemo { get; set; }
 }

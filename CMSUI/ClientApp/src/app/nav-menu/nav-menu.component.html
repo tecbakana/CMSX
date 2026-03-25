@@ -71,6 +71,15 @@
     </div>
   </nav>
 
+  <!-- ── Banner modo demo ── -->
+  <div *ngIf="usuario?.isDemo" class="d-flex align-items-center gap-2 px-3 py-2"
+    style="background:#fff3cd; border-bottom:2px solid #ffc107">
+    <i class="bi bi-play-circle-fill text-warning fs-5"></i>
+    <span class="fw-semibold text-dark">Modo Demonstração</span>
+    <span class="text-muted small">— Os dados serão apagados ao fazer login novamente. Explore à vontade!</span>
+    <a class="ms-auto btn btn-sm btn-outline-dark" routerLink="/signup">Criar minha conta</a>
+  </div>
+
   <!-- ── Barra de contexto de tenant (só admin) ── -->
   <div *ngIf="usuario?.acessoTotal" class="d-flex align-items-center gap-2 px-3 py-1 mb-3"
     style="background:#2c3e50; border-bottom:2px solid #e67e22">

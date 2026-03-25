@@ -58,6 +58,9 @@ namespace CMSUI.Controllers
             public string? Pagepinterest { get; set; }
             public string? Pageflicker { get; set; }
             public string? Idusuarioinicio { get; set; }
+            public string? Telefone { get; set; }
+            public string? Endereco { get; set; }
+            public string? Descricao { get; set; }
         }
 
         // Criação de aplicação: somente admin
@@ -89,7 +92,10 @@ namespace CMSUI.Controllers
                 Pageflicker     = dto.Pageflicker,
                 Idusuarioinicio = dto.Idusuarioinicio,
                 Datainicio      = DateTime.Now,
-                Isactive        = true
+                Isactive        = true,
+                Telefone        = dto.Telefone,
+                Endereco        = dto.Endereco,
+                Descricao       = dto.Descricao
             };
             _context.Aplicacaos.Add(item);
 
@@ -136,6 +142,9 @@ namespace CMSUI.Controllers
             item.Pagelinkedin   = dto.Pagelinkedin;
             item.Pagepinterest  = dto.Pagepinterest;
             item.Pageflicker    = dto.Pageflicker;
+            item.Telefone       = dto.Telefone;
+            item.Endereco       = dto.Endereco;
+            item.Descricao      = dto.Descricao;
             _context.SaveChanges();
             return Ok(item);
         }

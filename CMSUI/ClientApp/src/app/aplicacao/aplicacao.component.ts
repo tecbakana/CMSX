@@ -50,7 +50,8 @@ export class AplicacaoComponent implements OnInit {
       mailuser: '', mailpassword: '', mailserver: '', mailport: 587, issecure: false,
       pagsegurotoken: '', ogleadsense: '', header: '',
       pagefacebook: '', pageinstagram: '', pagetwitter: '',
-      pagelinkedin: '', pagepinterest: '', pageflicker: ''
+      pagelinkedin: '', pagepinterest: '', pageflicker: '',
+      telefone: '', endereco: '', descricao: ''
     };
     this.abaAtiva = 'geral';
     this.modoEdicao = true;

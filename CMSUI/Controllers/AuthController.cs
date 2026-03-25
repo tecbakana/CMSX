@@ -104,13 +104,17 @@ namespace CMSUI.Controllers
 
             string? aplicacaoid = apps.FirstOrDefault();
 
+            var app = _context.Aplicacaos.FirstOrDefault(a => a.Aplicacaoid == aplicacaoid);
+            bool isDemo = app?.IsDemo ?? false;
+
             var claims = new[]
             {
                 new Claim("userid",      user.Userid),
                 new Claim("apelido",     user.Apelido ?? ""),
                 new Claim("nome",        user.Nome ?? ""),
                 new Claim("aplicacaoid", aplicacaoid ?? ""),
-                new Claim("acessoTotal", acessoTotal.ToString())
+                new Claim("acessoTotal", acessoTotal.ToString()),
+                new Claim("isDemo",      isDemo.ToString())
             };
 
             var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
@@ -131,7 +135,74 @@ namespace CMSUI.Controllers
                 apelido     = user.Apelido,
                 acessoTotal,
                 grupos      = nomesGrupos,
-                aplicacaoid
+                aplicacaoid,
+                isDemo
+            });
+        }
+
+        // ── Login demo: reseta dados e emite token sem credenciais ───────────
+        [HttpPost("demo-login")]
+        public IActionResult DemoLogin()
+        {
+            var user = _context.Usuarios.FirstOrDefault(u => u.Apelido == "demo" && u.Ativo == (byte)1);
+            if (user == null)
+                return NotFound(new { message = "Tenant demo não configurado. Execute cmsxDB.tenant_demo.sql." });
+
+            var aplicacaoid = _context.Relusuarioaplicacaos
+                .Where(r => r.Usuarioid == user.Userid)
+                .Select(r => r.Aplicacaoid)
+                .FirstOrDefault();
+
+            if (aplicacaoid == null)
+                return StatusCode(500, new { message = "Tenant demo sem aplicação vinculada." });
+
+            // Reset: limpa layouts de todas as áreas do tenant demo
+            var areas = _context.Areas.Where(a => a.Aplicacaoid == aplicacaoid).ToList();
+            foreach (var area in areas)
+                area.Layout = "{\"blocos\":[]}";
+
+            // Remove conteúdos do tenant demo
+            var areaIds = areas.Select(a => a.Areaid).ToList();
+            var conteudos = _context.Conteudos.Where(c => areaIds.Contains(c.Areaid)).ToList();
+            _context.Conteudos.RemoveRange(conteudos);
+
+            // Zera uso de IA do dia
+            var hoje = DateOnly.FromDateTime(DateTime.Today);
+            var usoHoje = _context.IaUsos.Where(u => u.Aplicacaoid == aplicacaoid && u.Data == hoje).ToList();
+            _context.IaUsos.RemoveRange(usoHoje);
+
+            _context.SaveChanges();
+
+            var claims = new[]
+            {
+                new Claim("userid",      user.Userid),
+                new Claim("apelido",     user.Apelido ?? ""),
+                new Claim("nome",        "Demo"),
+                new Claim("aplicacaoid", aplicacaoid),
+                new Claim("acessoTotal", "False"),
+                new Claim("isDemo",      "True")
+            };
+
+            var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var token = new JwtSecurityToken(
+                issuer:             _config["Jwt:Issuer"],
+                audience:           _config["Jwt:Audience"],
+                claims:             claims,
+                expires:            DateTime.UtcNow.AddHours(2),
+                signingCredentials: creds
+            );
+
+            return Ok(new
+            {
+                token       = new JwtSecurityTokenHandler().WriteToken(token),
+                userid      = user.Userid,
+                nome        = "Demo",
+                apelido     = "demo",
+                acessoTotal = false,
+                grupos      = new string[0],
+                aplicacaoid,
+                isDemo      = true
             });
         }
     }
