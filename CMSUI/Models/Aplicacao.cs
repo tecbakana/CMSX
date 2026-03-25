@@ -27,4 +27,8 @@ public partial class Aplicacao
     public string? Ogleadsense { get; set; }
     public string? Header { get; set; }
     public bool? Isactive { get; set; }
+    public string? Telefone { get; set; }
+    public string? Endereco { get; set; }
+    public string? Descricao { get; set; }
+    public bool IsDemo { get; set; }
 }
