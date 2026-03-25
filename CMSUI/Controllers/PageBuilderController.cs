@@ -333,12 +333,12 @@ Regras importantes:
         }
 
         // Campos de imagem a resolver por tipo de bloco: (tipobloco, campo)
-        private static readonly (string tipo, string campo)[] _camposImagem =
-        [
+        private static readonly (string tipo, string campo)[] _camposImagem = new (string tipo, string campo)[]
+        {
             ("hero",          "imagemFundo"),
             ("banner-imagem", "url"),
             ("hero-cta",      "imagem_fundo")
-        ];
+        };
 
         private async Task<string> ResolverImagensAsync(string layoutJson)
         {
