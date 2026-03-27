@@ -140,6 +140,48 @@
     </div>
   </div>
 
+  <!-- Galeria de Mídias -->
+  <div class="card mb-3 border-info border-opacity-50">
+    <div class="card-header fw-semibold py-2 d-flex justify-content-between align-items-center">
+      <span>
+        <i class="bi bi-images me-1 text-info"></i>Galeria de Mídias
+        <span *ngIf="galeriaImagens.length > 0" class="badge bg-secondary ms-1">{{ galeriaImagens.length }}</span>
+      </span>
+      <div class="d-flex gap-2 align-items-center">
+        <label class="btn btn-info btn-sm text-white mb-0" [class.disabled]="uploadando">
+          <span *ngIf="uploadando" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!uploadando" class="bi bi-upload me-1"></i>
+          {{ uploadando ? 'Enviando…' : 'Upload' }}
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml,image/gif"
+            class="d-none" (change)="uploadImagem($event)" [disabled]="uploadando">
+        </label>
+        <button class="btn btn-outline-info btn-sm" (click)="toggleGaleria()">
+          <i class="bi" [class.bi-chevron-down]="!galeriaAberta" [class.bi-chevron-up]="galeriaAberta"></i>
+        </button>
+      </div>
+    </div>
+    <div *ngIf="galeriaAberta" class="card-body py-2">
+      <div *ngIf="galeriaImagens.length === 0" class="text-muted small fst-italic">
+        Nenhuma imagem enviada ainda. Clique em Upload para adicionar.
+      </div>
+      <div class="row g-2">
+        <div *ngFor="let img of galeriaImagens" class="col-6 col-md-3 col-lg-2">
+          <div class="card h-100">
+            <img [src]="img.url" class="card-img-top" style="height:80px;object-fit:cover" [alt]="img.nome" loading="lazy">
+            <div class="card-body p-1 d-flex gap-1">
+              <button class="btn btn-outline-secondary btn-sm flex-fill" (click)="copiarUrl(img.url)" title="Copiar URL">
+                <i class="bi bi-clipboard"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-sm" (click)="deletarImagem(img.blobName, img.nome)" title="Deletar">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Layouts salvos -->
   <div *ngIf="layoutsResumo.length > 0" class="card mb-3 border-success border-opacity-25">
     <div class="card-header fw-semibold py-2">
@@ -288,6 +330,39 @@
   </div>
 </div>
 
+<!-- ── Modal: gallery picker ──────────────────────────────────────── -->
+<div *ngIf="galeriaPickerAberto" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-images me-2 text-info"></i>Selecionar imagem da galeria</h5>
+        <button type="button" class="btn-close" (click)="galeriaPickerAberto = false"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="galeriaImagens.length === 0" class="text-center text-muted py-4">
+          <i class="bi bi-images" style="font-size:2rem"></i>
+          <p class="mt-2">Nenhuma imagem na galeria. Faça upload pelo painel de mídias.</p>
+        </div>
+        <div class="row g-2">
+          <div *ngFor="let img of galeriaImagens" class="col-6 col-md-4 col-lg-3">
+            <div class="card h-100 cursor-pointer border-2"
+              style="cursor:pointer"
+              (click)="selecionarImagemParaCampo(img.url)">
+              <img [src]="img.url" class="card-img-top" style="height:100px;object-fit:cover" [alt]="img.nome" loading="lazy">
+              <div class="card-body p-1">
+                <small class="text-muted text-truncate d-block" title="{{ img.nome }}">{{ img.nome }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" (click)="galeriaPickerAberto = false">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── Modal: editor de bloco ─────────────────────────────────────── -->
 <div *ngIf="editandoIndex !== null" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
@@ -332,12 +407,24 @@
                 [(ngModel)]="editandoConfig[campo.key]"
                 [placeholder]="campo.placeholder">
             </div>
-            <!-- string / url / demais -->
-            <div *ngIf="campo.type !== 'boolean' && campo.type !== 'text' && campo.type !== 'html' && campo.type !== 'color' && campo.type !== 'number'"
+            <!-- url com botão de galeria -->
+            <div *ngIf="campo.type === 'url'" class="col-md-6">
+              <label class="form-label form-label-sm">{{ campo.label }}</label>
+              <div class="input-group input-group-sm">
+                <input class="form-control" type="url"
+                  [(ngModel)]="editandoConfig[campo.key]"
+                  [placeholder]="campo.placeholder">
+                <button class="btn btn-outline-info" type="button"
+                  (click)="abrirGaleriaPicker(campo.key)" title="Selecionar da galeria">
+                  <i class="bi bi-images"></i>
+                </button>
+              </div>
+            </div>
+            <!-- string / demais -->
+            <div *ngIf="campo.type !== 'boolean' && campo.type !== 'text' && campo.type !== 'html' && campo.type !== 'color' && campo.type !== 'number' && campo.type !== 'url'"
               class="col-md-6">
               <label class="form-label form-label-sm">{{ campo.label }}</label>
-              <input class="form-control form-control-sm"
-                [type]="campo.type === 'url' ? 'url' : 'text'"
+              <input class="form-control form-control-sm" type="text"
                 [(ngModel)]="editandoConfig[campo.key]"
                 [placeholder]="campo.placeholder">
             </div>

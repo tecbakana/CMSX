@@ -34,6 +34,13 @@ export class PageBuilderComponent implements OnInit {
   erro: string = '';
   sucesso: string = '';
 
+  // Galeria de mídias
+  galeriaAberta = false;
+  galeriaImagens: any[] = [];
+  uploadando = false;
+  galeriaPickerAberto = false;
+  galeriaPickerCampo: string | null = null;
+
   // Templates
   usuario: any = {};
   isAdmin = false;
@@ -311,6 +318,60 @@ export class PageBuilderComponent implements OnInit {
       next: () => { this.carregarTemplates(); this.sucesso = 'Template excluído.'; },
       error: () => {}
     });
+  }
+
+  // ── Galeria de mídias ────────────────────────────────────────────────
+
+  toggleGaleria() {
+    this.galeriaAberta = !this.galeriaAberta;
+    if (this.galeriaAberta) this.carregarGaleria();
+  }
+
+  carregarGaleria() {
+    this.http.get<any[]>(`${this.baseUrl}media`, { params: this.appParams() }).subscribe({
+      next: r => this.galeriaImagens = r,
+      error: () => {}
+    });
+  }
+
+  uploadImagem(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const form = new FormData();
+    form.append('arquivo', input.files[0]);
+    this.uploadando = true;
+    this.http.post<any>(`${this.baseUrl}media/upload`, form, { params: this.appParams() }).subscribe({
+      next: () => { this.uploadando = false; this.carregarGaleria(); },
+      error: e => { this.uploadando = false; this.erro = e?.error?.erro ?? 'Erro ao fazer upload.'; }
+    });
+    input.value = '';
+  }
+
+  deletarImagem(blobName: string, nome: string) {
+    if (!confirm(`Deletar "${nome}"?`)) return;
+    this.http.delete(`${this.baseUrl}media`, { params: new HttpParams().set('blobName', blobName) }).subscribe({
+      next: () => this.carregarGaleria(),
+      error: () => {}
+    });
+  }
+
+  copiarUrl(url: string) {
+    navigator.clipboard.writeText(url).then(() => {
+      this.sucesso = 'URL copiada!';
+      setTimeout(() => { if (this.sucesso === 'URL copiada!') this.sucesso = ''; }, 2000);
+    });
+  }
+
+  abrirGaleriaPicker(campo: string) {
+    this.galeriaPickerCampo = campo;
+    this.galeriaPickerAberto = true;
+    this.carregarGaleria();
+  }
+
+  selecionarImagemParaCampo(url: string) {
+    if (this.galeriaPickerCampo) this.editandoConfig[this.galeriaPickerCampo] = url;
+    this.galeriaPickerAberto = false;
+    this.galeriaPickerCampo = null;
   }
 
   // ── Editor de bloco (modal) ───────────────────────────────────────────
