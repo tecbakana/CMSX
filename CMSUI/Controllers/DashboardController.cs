@@ -14,12 +14,13 @@ namespace CMSUI.Controllers
 
         [HttpGet]
         [Authorize]
-        public IActionResult Get()
+        public IActionResult Get([FromQuery] string? aplicacaoid = null)
         {
             var acessoTotal = User.FindFirstValue("acessoTotal") == "True";
-            var aplicacaoid = User.FindFirstValue("aplicacaoid");
+            var claimAppId  = User.FindFirstValue("aplicacaoid");
 
-            if (acessoTotal)
+            // Admin sem tenant selecionado: totais globais
+            if (acessoTotal && string.IsNullOrEmpty(aplicacaoid))
             {
                 return Ok(new
                 {
@@ -32,19 +33,21 @@ namespace CMSUI.Controllers
                 });
             }
 
+            var filtroId = acessoTotal ? aplicacaoid : claimAppId;
+
             var areasIds = _context.Areas
-                .Where(a => a.Aplicacaoid == aplicacaoid)
+                .Where(a => a.Aplicacaoid == filtroId)
                 .Select(a => a.Areaid)
                 .ToHashSet();
 
             return Ok(new
             {
-                usuarios   = _context.Relusuarioaplicacaos.Count(r => r.Aplicacaoid == aplicacaoid),
-                aplicacoes = _context.Aplicacaos.Count(a => a.Aplicacaoid == aplicacaoid),
+                usuarios   = _context.Relusuarioaplicacaos.Count(r => r.Aplicacaoid == filtroId),
+                aplicacoes = _context.Aplicacaos.Count(a => a.Aplicacaoid == filtroId),
                 conteudos  = _context.Conteudos.Count(c => c.Areaid != null && areasIds.Contains(c.Areaid)),
                 areas      = areasIds.Count,
-                categorias = _context.Cateria.Count(c => c.Aplicacaoid == aplicacaoid),
-                modulos    = _context.Relmoduloaplicacaos.Count(r => r.Aplicacaoid == aplicacaoid)
+                categorias = _context.Cateria.Count(c => c.Aplicacaoid == filtroId),
+                modulos    = _context.Relmoduloaplicacaos.Count(r => r.Aplicacaoid == filtroId)
             });
         }
     }

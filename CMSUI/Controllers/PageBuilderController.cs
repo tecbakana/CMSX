@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using CMSUI.Models;
 using CMSUI.Services;
@@ -41,11 +42,17 @@ namespace CMSUI.Controllers
 
         [Authorize]
         [HttpGet("layouts-resumo")]
-        public IActionResult GetLayoutsResumo()
+        public IActionResult GetLayoutsResumo([FromQuery] string? aplicacaoid = null)
         {
             var (acessoTotal, claimAppId) = UserContext();
-            var areas = _context.Areas
-                .Where(a => acessoTotal || a.Aplicacaoid == claimAppId)
+            var query = _context.Areas.AsQueryable();
+
+            if (!acessoTotal)
+                query = query.Where(a => a.Aplicacaoid == claimAppId);
+            else if (!string.IsNullOrEmpty(aplicacaoid))
+                query = query.Where(a => a.Aplicacaoid == aplicacaoid);
+
+            var areas = query
                 .Where(a => a.Layout != null && a.Layout != "{\"blocos\":[]}")
                 .Select(a => new { a.Areaid, a.Nome, a.Layout })
                 .ToList()
@@ -364,66 +371,34 @@ Regras importantes:
 
             try
             {
-                using var doc = JsonDocument.Parse(layoutJson);
-                var root = doc.RootElement.Clone();
-                var blocos = root.GetProperty("blocos");
+                var root = JsonNode.Parse(layoutJson)!;
+                var blocos = root["blocos"]?.AsArray();
+                if (blocos == null) return layoutJson;
 
-                var resultado = new System.Text.StringBuilder();
-                resultado.Append("{\"blocos\":[");
-
-                bool primeiro = true;
-                foreach (var bloco in blocos.EnumerateArray())
+                foreach (var blocoNode in blocos)
                 {
-                    if (!primeiro) resultado.Append(',');
-                    primeiro = false;
-
-                    var tipo = bloco.GetProperty("tipo").GetString() ?? "";
+                    if (blocoNode == null) continue;
+                    var tipo = blocoNode["tipo"]?.GetValue<string>() ?? "";
                     var campoAlvo = _camposImagem.FirstOrDefault(c => c.tipo == tipo).campo;
+                    if (campoAlvo == null) continue;
 
-                    if (campoAlvo == null || !bloco.TryGetProperty("config", out var config))
-                    {
-                        resultado.Append(bloco.GetRawText());
-                        continue;
-                    }
+                    var config = blocoNode["config"]?.AsObject();
+                    if (config == null || !config.TryGetPropertyValue(campoAlvo, out var valorNode)) continue;
 
-                    if (!config.TryGetProperty(campoAlvo, out var valorEl))
-                    {
-                        resultado.Append(bloco.GetRawText());
-                        continue;
-                    }
-
-                    var valor = valorEl.GetString() ?? "";
-                    // Só resolve se não for já uma URL
+                    var valor = valorNode?.GetValue<string>() ?? "";
                     if (valor.StartsWith("http", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(valor))
-                    {
-                        resultado.Append(bloco.GetRawText());
                         continue;
-                    }
 
                     var imageUrl = await BuscarUnsplashAsync(valor, accessKey);
-                    if (imageUrl == null)
-                    {
-                        resultado.Append(bloco.GetRawText());
-                        continue;
-                    }
-
-                    // Reconstrói o bloco com o campo de imagem substituído
-                    var blocoRaw = bloco.GetRawText();
-                    var configRaw = config.GetRawText();
-                    var valorEscapado = JsonSerializer.Serialize(valor);
-                    var urlEscapada = JsonSerializer.Serialize(imageUrl);
-                    var configNova = configRaw.Replace($"\"{campoAlvo}\":{valorEscapado}", $"\"{campoAlvo}\":{urlEscapada}");
-                    resultado.Append(blocoRaw.Replace(configRaw, configNova));
+                    if (imageUrl != null)
+                        config[campoAlvo] = JsonValue.Create(imageUrl);
                 }
 
-                resultado.Append("]}");
-                // Valida antes de retornar
-                JsonDocument.Parse(resultado.ToString());
-                return resultado.ToString();
+                return root.ToJsonString();
             }
             catch
             {
-                return layoutJson; // se falhar, retorna o original
+                return layoutJson;
             }
         }
 

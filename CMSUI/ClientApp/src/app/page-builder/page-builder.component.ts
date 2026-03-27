@@ -72,7 +72,7 @@ export class PageBuilderComponent implements OnInit {
     const u = JSON.parse(sessionStorage.getItem('usuario') || '{}');
     this.usuario = u;
     this.isAdmin = !!u.acessoTotal;
-    this.adminCtx.tenant$.subscribe(() => this.carregarAreas());
+    this.adminCtx.tenant$.subscribe(() => { this.carregarAreas(); this.carregarLayoutsResumo(); });
     this.carregarAreas();
     this.carregarBlocos();
     this.carregarIaConfig();
@@ -98,7 +98,7 @@ export class PageBuilderComponent implements OnInit {
   }
 
   carregarLayoutsResumo() {
-    this.http.get<any[]>(`${this.baseUrl}pagebuilder/layouts-resumo`).subscribe({
+    this.http.get<any[]>(`${this.baseUrl}pagebuilder/layouts-resumo`, { params: this.appParams() }).subscribe({
       next: r => this.layoutsResumo = r,
       error: () => {}
     });
@@ -379,11 +379,18 @@ export class PageBuilderComponent implements OnInit {
   editandoConfig: any = {};
   editandoSchema: any = {};
   editandoNome = '';
+  editandoCampos: { key: string; label: string; type: string; placeholder: string }[] = [];
 
   abrirEditorBloco(i: number) {
     const bloco = this.layoutAtual[i];
     const dict  = this.blocos.find(d => d.tipobloco === bloco.tipo);
     try { this.editandoSchema = JSON.parse(dict?.schemaConfig ?? '{}'); } catch { this.editandoSchema = {}; }
+    this.editandoCampos = Object.entries(this.editandoSchema).map(([key, def]: [string, any]) => ({
+      key,
+      label:       def?.label       ?? key,
+      type:        def?.type        ?? 'string',
+      placeholder: def?.placeholder ?? def?.default ?? ''
+    }));
     this.editandoConfig = JSON.parse(JSON.stringify(bloco.config ?? {}));
     this.editandoNome   = bloco._nome ?? bloco.tipo;
     this.editandoIndex  = i;
@@ -393,6 +400,7 @@ export class PageBuilderComponent implements OnInit {
     this.editandoIndex = null;
     this.editandoConfig = {};
     this.editandoSchema = {};
+    this.editandoCampos = [];
   }
 
   confirmarEdicaoBloco() {

@@ -374,11 +374,11 @@
         <button type="button" class="btn-close" (click)="fecharEditorBloco()"></button>
       </div>
       <div class="modal-body">
-        <div *ngIf="camposSchema().length === 0" class="text-muted fst-italic">
+        <div *ngIf="editandoCampos.length === 0" class="text-muted fst-italic">
           Nenhum campo configurável para este bloco.
         </div>
         <div class="row g-3">
-          <ng-container *ngFor="let campo of camposSchema()">
+          <ng-container *ngFor="let campo of editandoCampos">
             <!-- boolean → checkbox -->
             <div *ngIf="campo.type === 'boolean'" class="col-12">
               <div class="form-check form-switch">
