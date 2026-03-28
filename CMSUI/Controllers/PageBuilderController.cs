@@ -228,9 +228,14 @@ namespace CMSUI.Controllers
 
             // Monta o contexto do tenant
             var blocos = _context.DictBlocos
-                .Select(b => new { b.Tipobloco, b.Nome, b.Descricao, campos = b.SchemaConfig != null
-                    ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(b.SchemaConfig)!.Keys.ToArray()
-                    : Array.Empty<string>() })
+                .Select(b => new { b.Tipobloco, b.Nome, b.Descricao, b.SchemaConfig })
+                .ToList()
+                .Select(b => new {
+                    b.Tipobloco, b.Nome, b.Descricao,
+                    campos = b.SchemaConfig != null
+                        ? JsonSerializer.Deserialize<Dictionary<string, object>>(b.SchemaConfig)!.Keys.ToArray()
+                        : Array.Empty<string>()
+                })
                 .ToList();
 
             var areas = _context.Areas
