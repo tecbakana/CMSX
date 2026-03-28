@@ -168,10 +168,11 @@
           </div>
 
           <!-- imagem -->
-          <div *ngIf="bloco.tipo === 'imagem'">
+          <div *ngIf="bloco.tipo === 'imagem'" [style.width]="bloco.coluna === 'auto' ? 'fit-content' : null">
             <a [href]="bloco.config.link || null" [target]="bloco.config.link ? '_blank' : null">
               <img *ngIf="bloco.config.url" [src]="bloco.config.url" [alt]="bloco.config.alt || ''"
-                class="img-fluid rounded" [style.width]="bloco.config.largura || '100%'">
+                class="img-fluid rounded"
+                [style.width]="bloco.coluna === 'auto' ? (bloco.config.largura || null) : (bloco.config.largura || '100%')">
             </a>
           </div>
 
