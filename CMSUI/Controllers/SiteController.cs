@@ -49,8 +49,9 @@ namespace CMSUI.Controllers
                             var tipo = b.GetProperty("tipo").GetString() ?? "";
                             var configRaw = b.GetProperty("config").GetRawText();
                             var config = JsonDocument.Parse(configRaw).RootElement;
+                            var coluna = b.TryGetProperty("coluna", out var colunaEl) ? colunaEl.GetString() : null;
                             var dados = EnriquecerBloco(tipo, config, app.Aplicacaoid!);
-                            blocos.Add(new { tipo, config = JsonSerializer.Deserialize<object>(configRaw), dados });
+                            blocos.Add(new { tipo, config = JsonSerializer.Deserialize<object>(configRaw), coluna, dados });
                         }
                     }
                     catch { }

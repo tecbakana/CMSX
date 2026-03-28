@@ -253,7 +253,11 @@ export class PageBuilderComponent implements OnInit {
   }
 
   abrirPreview() {
-    window.open(`/preview/${this.areaid}`, '_blank');
+    const appId = this.usuario.aplicacaoid ?? this.adminCtx.tenantId;
+    const area = this.areas.find((a: any) => a.areaid === this.areaid);
+    const areaUrl = area?.url;
+    const url = areaUrl ? `/preview/${appId}/${areaUrl}` : `/preview/${appId}`;
+    window.open(url, '_blank');
   }
 
   limparLayout() {
