@@ -356,6 +356,10 @@
                     (click)="abrirEditorBloco(i)">
                     <i class="bi bi-pencil"></i>
                   </button>
+                  <button class="btn btn-outline-warning" title="Trocar tipo do bloco"
+                    (click)="trocandoIndex = (trocandoIndex === i ? null : i)">
+                    <i class="bi bi-arrow-left-right"></i>
+                  </button>
                   <button class="btn btn-outline-secondary" title="Mover para cima"
                     (click)="moverBloco(i, 'up')" [disabled]="i === 0">
                     <i class="bi bi-arrow-up"></i>
@@ -380,6 +384,16 @@
                 <div *ngIf="configVisual(bloco).length === 0" class="col">
                   <small class="text-muted fst-italic">Sem configurações definidas.</small>
                 </div>
+              </div>
+            </div>
+            <!-- Picker inline de troca de bloco -->
+            <div *ngIf="trocandoIndex === i" class="card-footer bg-warning bg-opacity-10 border-top border-warning border-opacity-25 py-2">
+              <small class="text-muted me-2"><i class="bi bi-arrow-left-right me-1 text-warning"></i>Escolha o novo tipo (o conteúdo atual será perdido):</small>
+              <div class="d-flex flex-wrap gap-1 mt-1">
+                <button *ngFor="let b of blocos" class="btn btn-outline-secondary btn-sm"
+                  (click)="trocarBloco(i, b)" [title]="b.descricao">
+                  <i class="bi {{ b.icone }} me-1"></i>{{ b.nome }}
+                </button>
               </div>
             </div>
           </div>

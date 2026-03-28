@@ -278,10 +278,19 @@ export class PageBuilderComponent implements OnInit {
 
   removerBloco(index: number) {
     this.layoutAtual.splice(index, 1);
+    if (this.trocandoIndex === index) this.trocandoIndex = null;
   }
 
   adicionarBloco(b: DictBloco) {
     this.layoutAtual = [...this.layoutAtual, this.enriquecerBloco({ tipo: b.tipobloco, config: {}, coluna: 'full' })];
+  }
+
+  trocandoIndex: number | null = null;
+
+  trocarBloco(index: number, b: DictBloco) {
+    const coluna = this.layoutAtual[index].coluna;
+    this.layoutAtual[index] = this.enriquecerBloco({ tipo: b.tipobloco, config: {}, coluna });
+    this.trocandoIndex = null;
   }
 
   setColunaBloco(index: number, coluna: string) {
