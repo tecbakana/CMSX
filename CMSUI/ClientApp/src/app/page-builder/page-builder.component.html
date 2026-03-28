@@ -282,6 +282,9 @@
               <i *ngIf="!salvando" class="bi bi-floppy me-1"></i>
               {{ salvando ? 'Salvando…' : 'Salvar Layout' }}
             </button>
+            <button *ngIf="areaid" class="btn btn-outline-info btn-sm" (click)="abrirPreview()">
+              <i class="bi bi-box-arrow-up-right me-1"></i>Preview no site
+            </button>
             <button *ngIf="layoutAtual.length > 0" class="btn btn-outline-secondary btn-sm" (click)="limparLayout()">
               <i class="bi bi-arrow-counterclockwise me-1"></i>Limpar e começar novo
             </button>

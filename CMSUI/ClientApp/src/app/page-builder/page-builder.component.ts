@@ -228,7 +228,7 @@ export class PageBuilderComponent implements OnInit {
     this.sucesso = '';
 
     const payload = {
-      blocos: this.layoutAtual.map(b => ({ tipo: b.tipo, config: b.config }))
+      blocos: this.layoutAtual.map(b => ({ tipo: b.tipo, config: b.config, coluna: b.coluna }))
     };
 
     this.http.put(`${this.baseUrl}pagebuilder/layout/${this.areaid}`, payload).subscribe({
@@ -244,6 +244,10 @@ export class PageBuilderComponent implements OnInit {
   selecionarLayoutSalvo(areaid: string) {
     this.areaid = areaid;
     this.onAreaChange();
+  }
+
+  abrirPreview() {
+    window.open(`/preview/${this.areaid}`, '_blank');
   }
 
   limparLayout() {
