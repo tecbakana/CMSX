@@ -493,6 +493,10 @@ export class PageBuilderComponent implements OnInit {
     this.editandoIndex  = i;
   }
 
+  parseJsonSafe(valor: string, fallback: any): any {
+    try { return JSON.parse(valor); } catch { return fallback; }
+  }
+
   fecharEditorBloco() {
     this.editandoIndex = null;
     this.editandoConfig = {};

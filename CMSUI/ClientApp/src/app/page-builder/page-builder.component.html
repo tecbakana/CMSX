@@ -554,8 +554,16 @@
                 </button>
               </div>
             </div>
+            <!-- array → textarea JSON -->
+            <div *ngIf="campo.type === 'array'" class="col-12">
+              <label class="form-label form-label-sm">{{ campo.label }} <span class="text-muted">(JSON)</span></label>
+              <textarea class="form-control form-control-sm font-monospace" rows="5"
+                [ngModel]="editandoConfig[campo.key] | json"
+                (ngModelChange)="editandoConfig[campo.key] = parseJsonSafe($event, editandoConfig[campo.key])"
+                [placeholder]="campo.placeholder"></textarea>
+            </div>
             <!-- string / demais -->
-            <div *ngIf="campo.type !== 'boolean' && campo.type !== 'text' && campo.type !== 'html' && campo.type !== 'color' && campo.type !== 'number' && campo.type !== 'url'"
+            <div *ngIf="campo.type !== 'boolean' && campo.type !== 'text' && campo.type !== 'html' && campo.type !== 'color' && campo.type !== 'number' && campo.type !== 'url' && campo.type !== 'array'"
               class="col-md-6">
               <label class="form-label form-label-sm">{{ campo.label }}</label>
               <input class="form-control form-control-sm" type="text"
