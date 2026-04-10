@@ -24,6 +24,7 @@ import { VinculoModuloComponent } from './vinculo-modulo/vinculo-modulo.componen
 import { PageBuilderComponent } from './page-builder/page-builder.component';
 import { SiteComponent } from './site/site.component';
 import { LandingComponent } from './landing/landing.component';
+import { PedidoComponent } from './pedido/pedido.component';
 
 @NgModule({
   declarations: [
@@ -45,7 +46,8 @@ import { LandingComponent } from './landing/landing.component';
     VinculoModuloComponent,
     PageBuilderComponent,
     SiteComponent,
-    LandingComponent
+    LandingComponent,
+    PedidoComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
@@ -71,6 +73,7 @@ import { LandingComponent } from './landing/landing.component';
       { path: 'grupos', component: GrupoComponent },
       { path: 'vinculos', component: VinculoComponent },
       { path: 'vinculosmodulo', component: VinculoModuloComponent },
+      { path: 'pedidos', component: PedidoComponent },
       { path: 'page-builder', component: PageBuilderComponent },
       { path: 's/:slug', component: SiteComponent },
       { path: 's/:slug/:area', component: SiteComponent },

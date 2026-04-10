@@ -266,6 +266,7 @@ namespace CMSUI.Controllers
 
         [HttpPost("gerar-descricao")]
         [RequestSizeLimit(20 * 1024 * 1024)]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> GerarDescricao(
             [FromForm] IFormFile? arquivo,
             [FromForm] string? imageUrl,

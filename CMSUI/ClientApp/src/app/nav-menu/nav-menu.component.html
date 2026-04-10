@@ -1,102 +1,101 @@
-<header>
-  <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom box-shadow mb-0">
-    <div class="container-fluid">
-      <a class="navbar-brand" [routerLink]="['/']">
-        <img src="/assets/logo.png" alt="Multiplai" height="32" style="object-fit:contain">
-      </a>
-      <button class="navbar-toggler" type="button" (click)="toggle()"
-        [attr.aria-expanded]="isExpanded" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="navbar-collapse collapse d-sm-inline-flex" [ngClass]="{ show: isExpanded }">
+<aside class="sidebar">
 
-        <!-- Links do menu (módulos do banco) -->
-        <ul class="navbar-nav flex-grow-1" *ngIf="usuario">
-          <li *ngFor="let m of modulos" class="nav-item" [routerLinkActive]="['active']"
-            [routerLinkActiveOptions]="{ exact: m.url === '/dashboard' }">
-            <a class="nav-link" [routerLink]="[m.url]">{{m.nome}}</a>
-          </li>
-        </ul>
-
-        <!-- Lado direito -->
-        <ul class="navbar-nav ms-auto" *ngIf="usuario">
-
-          <!-- Link para editar a própria aplicação (todos os usuários) -->
-          <li class="nav-item" *ngIf="usuario.aplicacaoid">
-            <a class="nav-link" [routerLink]="['/minha-aplicacao']" title="Minha Aplicação">
-              <span>&#9881;</span> Minha Aplicação
-            </a>
-          </li>
-
-          <!-- Master: links administrativos -->
-          <li class="nav-item" *ngIf="usuario.acessoTotal">
-            <a class="nav-link" [routerLink]="['/aplicacoes']" title="Gerenciar Tenants">
-              &#9883; Tenants
-            </a>
-          </li>
-          <li class="nav-item" *ngIf="usuario.acessoTotal">
-            <a class="nav-link" [routerLink]="['/grupos']" title="Grupos de Acesso">
-              &#128101; Grupos
-            </a>
-          </li>
-          <li class="nav-item" *ngIf="usuario.acessoTotal">
-            <a class="nav-link" [routerLink]="['/vinculos']" title="Vínculos Usuário/App">
-              &#128279; Vínculos
-            </a>
-          </li>
-          <li class="nav-item" *ngIf="usuario.acessoTotal">
-            <a class="nav-link" [routerLink]="['/vinculosmodulo']" title="Acesso a Módulos">
-              &#9646; Módulos/Usuário
-            </a>
-          </li>
-
-          <!-- Usuário logado + Sair -->
-          <li class="nav-item">
-            <span class="nav-link text-secondary pe-1">
-              {{usuario.nome}} <small class="text-muted">({{usuario.acessoTotal ? 'Admin' : 'Tenant'}})</small>
-            </span>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-danger fw-bold" href="#" (click)="logout(); $event.preventDefault()">Sair</a>
-          </li>
-
-        </ul>
-
-        <!-- Não logado -->
-        <ul class="navbar-nav ms-auto" *ngIf="!usuario">
-          <li class="nav-item">
-            <a class="nav-link" [routerLink]="['/login']">Entrar</a>
-          </li>
-        </ul>
-
+  <!-- Logo -->
+  <a class="sidebar-logo" [routerLink]="['/']">
+    <div class="logo-mark">
+      <img src="/assets/logo.png" alt="Multiplai" class="logo-icon-img"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+      <div class="logo-icon-placeholder" style="display:none">M</div>
+      <div>
+        <div class="logo-name">Multiplai</div>
+        <div class="logo-sub">CMS Platform</div>
       </div>
     </div>
+  </a>
+
+  <!-- Nav -->
+  <nav class="sidebar-nav">
+
+    <!-- Módulos dinâmicos -->
+    <div class="nav-section-label" *ngIf="modulos.length > 0">Módulos</div>
+    <a class="nav-item"
+      *ngFor="let m of modulos"
+      [routerLink]="[m.url]"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: m.url === '/dashboard' }">
+      <span class="nav-icon">◈</span>
+      {{ m.nome }}
+    </a>
+
+    <!-- Minha Aplicação -->
+    <div class="nav-separator" *ngIf="usuario?.aplicacaoid"></div>
+    <a class="nav-item" *ngIf="usuario?.aplicacaoid"
+      [routerLink]="['/minha-aplicacao']" routerLinkActive="active">
+      <span class="nav-icon">⚙</span> Minha Aplicação
+    </a>
+
+    <!-- Admin (colapsável) -->
+    <div class="nav-separator" *ngIf="usuario?.acessoTotal"></div>
+    <div *ngIf="usuario?.acessoTotal">
+      <div class="nav-group-header" (click)="adminExpanded = !adminExpanded">
+        <span class="nav-icon">⬡</span>
+        Admin
+        <span class="nav-group-arrow" [class.expanded]="adminExpanded">›</span>
+      </div>
+      <div *ngIf="adminExpanded">
+        <a class="nav-item nav-item-sub" [routerLink]="['/aplicacoes']" routerLinkActive="active">
+          <span class="nav-icon">⬡</span> Tenants
+        </a>
+        <a class="nav-item nav-item-sub" [routerLink]="['/grupos']" routerLinkActive="active">
+          <span class="nav-icon">👥</span> Grupos
+        </a>
+        <a class="nav-item nav-item-sub" [routerLink]="['/vinculos']" routerLinkActive="active">
+          <span class="nav-icon">🔗</span> Vínculos
+        </a>
+        <a class="nav-item nav-item-sub" [routerLink]="['/vinculosmodulo']" routerLinkActive="active">
+          <span class="nav-icon">▪</span> Módulos/Usuário
+        </a>
+      </div>
+
+      <!-- Tenant selector -->
+      <div class="nav-separator"></div>
+      <div class="sidebar-tenant">
+        <div class="tenant-label">Contexto de Tenant</div>
+        <select class="tenant-select" [(ngModel)]="tenantSelecionadoId" (change)="onTenantChange()">
+          <option value="">— Todos os tenants —</option>
+          <option *ngFor="let a of aplicacoes" [value]="a.aplicacaoid">{{ a.nome }}</option>
+        </select>
+        <span class="tenant-filter-badge" *ngIf="tenantSelecionadoId">Filtrando</span>
+      </div>
+    </div>
+
+    <!-- Demo banner -->
+    <div class="nav-separator" *ngIf="usuario?.isDemo"></div>
+    <div class="sidebar-demo-banner" *ngIf="usuario?.isDemo">
+      <div class="demo-title">Modo Demonstração</div>
+      <div class="demo-text">Dados apagados ao sair. Explore à vontade!</div>
+      <a class="demo-link" [routerLink]="['/signup']">Criar minha conta →</a>
+    </div>
+
   </nav>
 
-  <!-- ── Banner modo demo ── -->
-  <div *ngIf="usuario?.isDemo" class="d-flex align-items-center gap-2 px-3 py-2"
-    style="background:#fff3cd; border-bottom:2px solid #ffc107">
-    <i class="bi bi-play-circle-fill text-warning fs-5"></i>
-    <span class="fw-semibold text-dark">Modo Demonstração</span>
-    <span class="text-muted small">— Os dados serão apagados ao fazer login novamente. Explore à vontade!</span>
-    <a class="ms-auto btn btn-sm btn-outline-dark" routerLink="/signup">Criar minha conta</a>
+  <!-- Footer -->
+  <div class="sidebar-footer">
+    <div class="user-info" *ngIf="usuario">
+      <div class="user-name">{{ usuario.nome }}</div>
+      <div class="user-role">{{ usuario.acessoTotal ? 'Admin' : 'Tenant' }}</div>
+    </div>
+    <div class="nav-separator"></div>
+    <button class="theme-btn" (click)="toggleTheme()">
+      <span>{{ isDark ? '☀' : '◑' }}</span>
+      {{ isDark ? 'Modo claro' : 'Modo escuro' }}
+    </button>
+    <a class="nav-item logout-btn" href="#" (click)="logout(); $event.preventDefault()" *ngIf="usuario">
+      <span class="nav-icon">↪</span> Sair
+    </a>
+    <a class="nav-item" [routerLink]="['/login']" *ngIf="!usuario">
+      <span class="nav-icon">→</span> Entrar
+    </a>
   </div>
 
-  <!-- ── Barra de contexto de tenant (só admin) ── -->
-  <div *ngIf="usuario?.acessoTotal" class="d-flex align-items-center gap-2 px-3 py-1 mb-3"
-    style="background:#2c3e50; border-bottom:2px solid #e67e22">
-    <i class="bi bi-building text-warning"></i>
-    <small class="text-white text-nowrap fw-semibold">Contexto:</small>
-    <select class="form-select form-select-sm" style="max-width:260px"
-      [(ngModel)]="tenantSelecionadoId" (change)="onTenantChange()">
-      <option value="">— Todos os tenants —</option>
-      <option *ngFor="let a of aplicacoes" [value]="a.aplicacaoid">{{ a.nome }}</option>
-    </select>
-    <span *ngIf="tenantSelecionadoId" class="badge bg-warning text-dark">
-      <i class="bi bi-funnel-fill me-1"></i>Filtrando
-    </span>
-    <span *ngIf="!tenantSelecionadoId" class="text-muted small fst-italic">
-      Exibindo dados de todos os tenants
-    </span>
-  </div>
-</header>
+</aside>

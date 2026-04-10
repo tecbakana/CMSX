@@ -1,6 +1,6 @@
-<body>
+<div class="app-shell">
   <app-nav-menu *ngIf="!rotaPublica"></app-nav-menu>
-  <div [class.container]="!rotaPublica">
+  <main class="main-content" [class.full-width]="rotaPublica">
     <router-outlet></router-outlet>
-  </div>
-</body>
+  </main>
+</div>

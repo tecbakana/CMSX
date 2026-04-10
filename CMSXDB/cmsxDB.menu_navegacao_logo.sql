@@ -1,4 +1,3 @@
--- Adiciona campos logo e logo_altura ao bloco menu-navegacao
-UPDATE dict_blocos
-SET schema_config = '{"titulo": {"label": "Título (exibido quando não há logo)"}, "logo": {"label": "URL do logo (imagem)", "type": "url"}, "logo_altura": {"label": "Altura do logo (ex: 40px)", "placeholder": "40px"}, "cor_fundo": {"label": "Cor de fundo (ex: #1a1a2e)"}, "cor_texto": {"label": "Cor do texto (ex: #ffffff)"}, "estilo": {"label": "Estilo (horizontal | dropdown)"}}'
-WHERE tipobloco = 'menu-navegacao';
+ UPDATE dict_blocos
+  SET schema_config = '{"titulo":{"label":"Título (exibido quando não há logo)"},"logo":{"label":"URL do logo  (imagem)","type":"url"},"logo_altura":{"label":"Altura do logo (ex:  40px)","placeholder":"40px"},"cor_fundo":{"label":"Cor de fundo (ex: #1a1a2e)"},"cor_texto":{"label":"Cor do texto  (ex: #ffffff)"},"estilo":{"label":"Estilo (horizontal | dropdown)"}}'
+  WHERE tipobloco = 'menu-navegacao';

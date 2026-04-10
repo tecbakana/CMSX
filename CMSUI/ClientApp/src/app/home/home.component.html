@@ -1,54 +1,70 @@
-<div class="container-fluid py-4">
-  <h2 class="mb-4">Dashboard</h2>
-  <div *ngIf="!stats" class="text-muted"><em>Carregando...</em></div>
+<div class="py-2">
+  <h4 class="mb-1">Dashboard</h4>
+  <p class="mb-4" style="color:var(--muted);font-size:13px">Visão geral da plataforma</p>
+
+  <div *ngIf="!stats" style="color:var(--muted);font-style:italic">Carregando...</div>
+
   <div *ngIf="stats" class="row g-3">
-    <div class="col-md-2 col-sm-4">
-      <div class="card text-white bg-primary h-100">
-        <div class="card-body text-center">
-          <h1>{{stats.usuarios}}</h1>
-          <p class="mb-0">Usuários</p>
+
+    <div class="col-md-4 col-sm-6">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--accent-light);color:var(--accent)">👤</div>
+        <div>
+          <div class="stat-value">{{stats.usuarios}}</div>
+          <div class="stat-label">Usuários</div>
         </div>
       </div>
     </div>
-    <div class="col-md-2 col-sm-4">
-      <div class="card text-white bg-success h-100">
-        <div class="card-body text-center">
-          <h1>{{stats.aplicacoes}}</h1>
-          <p class="mb-0">Aplicações</p>
+
+    <div class="col-md-4 col-sm-6">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--green-light);color:var(--green)">⬡</div>
+        <div>
+          <div class="stat-value">{{stats.aplicacoes}}</div>
+          <div class="stat-label">Aplicações</div>
         </div>
       </div>
     </div>
-    <div class="col-md-2 col-sm-4">
-      <div class="card text-white bg-info h-100">
-        <div class="card-body text-center">
-          <h1>{{stats.conteudos}}</h1>
-          <p class="mb-0">Conteúdos</p>
+
+    <div class="col-md-4 col-sm-6">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--accent-light);color:var(--accent)">📄</div>
+        <div>
+          <div class="stat-value">{{stats.conteudos}}</div>
+          <div class="stat-label">Conteúdos</div>
         </div>
       </div>
     </div>
-    <div class="col-md-2 col-sm-4">
-      <div class="card text-white bg-warning h-100">
-        <div class="card-body text-center">
-          <h1>{{stats.areas}}</h1>
-          <p class="mb-0">Áreas</p>
+
+    <div class="col-md-4 col-sm-6">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--yellow-light);color:var(--yellow)">◈</div>
+        <div>
+          <div class="stat-value">{{stats.areas}}</div>
+          <div class="stat-label">Áreas</div>
         </div>
       </div>
     </div>
-    <div class="col-md-2 col-sm-4">
-      <div class="card text-white bg-secondary h-100">
-        <div class="card-body text-center">
-          <h1>{{stats.categorias}}</h1>
-          <p class="mb-0">Categorias</p>
+
+    <div class="col-md-4 col-sm-6">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--red-light);color:var(--red)">🏷</div>
+        <div>
+          <div class="stat-value">{{stats.categorias}}</div>
+          <div class="stat-label">Categorias</div>
         </div>
       </div>
     </div>
-    <div class="col-md-2 col-sm-4">
-      <div class="card text-white bg-dark h-100">
-        <div class="card-body text-center">
-          <h1>{{stats.modulos}}</h1>
-          <p class="mb-0">Módulos</p>
+
+    <div class="col-md-4 col-sm-6">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--surface2);color:var(--muted)">▪</div>
+        <div>
+          <div class="stat-value">{{stats.modulos}}</div>
+          <div class="stat-label">Módulos</div>
         </div>
       </div>
     </div>
+
   </div>
 </div>

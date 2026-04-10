@@ -94,6 +94,10 @@ public partial class CmsxDbContext : DbContext
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
+    public virtual DbSet<Pedido> Pedidos { get; set; }
+
+    public virtual DbSet<Statuspedido> Statuspedidos { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseNpgsql("User ID=postgres;Password=su74;Host=localhost;Port=5432;Database=cmsxDB;");
@@ -983,6 +987,45 @@ public partial class CmsxDbContext : DbContext
             entity.Property(e => e.Userid)
                 .HasDefaultValueSql("uuid_generate_v4()")
                 .HasColumnName("userid");
+        });
+
+        modelBuilder.Entity<Pedido>(entity =>
+        {
+            entity.HasKey(e => e.Pedidoid).HasName("pedidoPK");
+            entity.ToTable("pedido");
+            entity.Property(e => e.Pedidoid)
+                .HasDefaultValueSql("NEWID()")
+                .HasColumnName("pedidoid");
+            entity.Property(e => e.Aplicacaoid).HasMaxLength(36).HasColumnName("aplicacaoid");
+            entity.Property(e => e.Numeropedido).HasMaxLength(100).HasColumnName("numeropedido");
+            entity.Property(e => e.Clientenome).HasMaxLength(200).HasColumnName("clientenome");
+            entity.Property(e => e.Clienteemail).HasMaxLength(200).HasColumnName("clienteemail");
+            entity.Property(e => e.Valorpedido).HasColumnType("decimal(12,2)").HasColumnName("valorpedido");
+            entity.Property(e => e.Statusatual).HasMaxLength(50).HasColumnName("statusatual");
+            entity.Property(e => e.Datainclusao)
+                .HasDefaultValueSql("GETUTCDATE()")
+                .HasColumnType("datetime2")
+                .HasColumnName("datainclusao");
+        });
+
+        modelBuilder.Entity<Statuspedido>(entity =>
+        {
+            entity.HasKey(e => e.Statuspedidoid).HasName("statuspedidoPK");
+            entity.ToTable("statuspedido");
+            entity.Property(e => e.Statuspedidoid)
+                .HasDefaultValueSql("NEWID()")
+                .HasColumnName("statuspedidoid");
+            entity.Property(e => e.Pedidoid).HasColumnName("pedidoid");
+            entity.Property(e => e.Status).HasMaxLength(50).HasColumnName("status");
+            entity.Property(e => e.Descricao).HasMaxLength(500).HasColumnName("descricao");
+            entity.Property(e => e.Datahora)
+                .HasDefaultValueSql("GETUTCDATE()")
+                .HasColumnType("datetime2")
+                .HasColumnName("datahora");
+            entity.HasOne(e => e.PedidoNavigation)
+                .WithMany(p => p.Statuspedidos)
+                .HasForeignKey(e => e.Pedidoid)
+                .HasConstraintName("statuspedido_pedidoid_fk");
         });
 
         OnModelCreatingPartial(modelBuilder);

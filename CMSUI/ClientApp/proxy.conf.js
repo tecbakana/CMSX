@@ -24,7 +24,8 @@ const PROXY_CONFIG = [
       "/wiki",
       "/faq",
       "/site",
-      "/layouttemplates"
+      "/layouttemplates",
+      "/pedidos"
    ],
     proxyTimeout: 60000,
     timeout: 60000,

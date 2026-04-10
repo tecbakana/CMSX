@@ -8,6 +8,8 @@ import { AdminContextService } from '../admin-context.service';
 })
 export class NavMenuComponent implements OnInit {
   isExpanded = false;
+  adminExpanded = true;
+  isDark = false;
   modulos: any[] = [];
   usuario: any = null;
   aplicacoes: any[] = [];
@@ -20,6 +22,10 @@ export class NavMenuComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    const saved = localStorage.getItem('theme') || 'light';
+    this.isDark = saved === 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+
     this.usuario = JSON.parse(sessionStorage.getItem('usuario') || 'null');
     if (this.usuario) {
       const url = this.usuario.acessoTotal
@@ -37,6 +43,13 @@ export class NavMenuComponent implements OnInit {
   onTenantChange() {
     const app = this.aplicacoes.find(a => a.aplicacaoid === this.tenantSelecionadoId);
     this.adminCtx.set(app ? { aplicacaoid: app.aplicacaoid, nome: app.nome } : null);
+  }
+
+  toggleTheme() {
+    this.isDark = !this.isDark;
+    const theme = this.isDark ? 'dark' : 'light';
+    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
   }
 
   toggle() { this.isExpanded = !this.isExpanded; }

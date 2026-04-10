@@ -59,6 +59,8 @@ public partial class CmsxDbContext : DbContext
     public virtual DbSet<Tipoenvio> Tipoenvios { get; set; }
     public virtual DbSet<Unidade> Unidades { get; set; }
     public virtual DbSet<Usuario> Usuarios { get; set; }
+    public virtual DbSet<Pedido> Pedidos { get; set; }
+    public virtual DbSet<Statuspedido> Statuspedidos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -579,6 +581,35 @@ public partial class CmsxDbContext : DbContext
             entity.Property(e => e.Data).HasColumnName("data").HasColumnType("date")
                 .HasConversion(v => v.ToDateTime(TimeOnly.MinValue), v => DateOnly.FromDateTime(v));
             entity.Property(e => e.Contador).HasColumnName("contador");
+        });
+
+        modelBuilder.Entity<Pedido>(entity =>
+        {
+            entity.HasKey(e => e.Pedidoid).HasName("pedidoPK");
+            entity.ToTable("pedido");
+            entity.Property(e => e.Pedidoid).HasDefaultValueSql("NEWID()").HasColumnName("pedidoid");
+            entity.Property(e => e.Aplicacaoid).HasMaxLength(36).HasColumnName("aplicacaoid");
+            entity.Property(e => e.Numeropedido).HasMaxLength(100).HasColumnName("numeropedido");
+            entity.Property(e => e.Clientenome).HasMaxLength(200).HasColumnName("clientenome");
+            entity.Property(e => e.Clienteemail).HasMaxLength(200).HasColumnName("clienteemail");
+            entity.Property(e => e.Valorpedido).HasColumnType("decimal(12,2)").HasColumnName("valorpedido");
+            entity.Property(e => e.Statusatual).HasMaxLength(50).HasColumnName("statusatual");
+            entity.Property(e => e.Datainclusao).HasDefaultValueSql("GETUTCDATE()").HasColumnType("datetime2").HasColumnName("datainclusao");
+        });
+
+        modelBuilder.Entity<Statuspedido>(entity =>
+        {
+            entity.HasKey(e => e.Statuspedidoid).HasName("statuspedidoPK");
+            entity.ToTable("statuspedido");
+            entity.Property(e => e.Statuspedidoid).HasDefaultValueSql("NEWID()").HasColumnName("statuspedidoid");
+            entity.Property(e => e.Pedidoid).HasColumnName("pedidoid");
+            entity.Property(e => e.Status).HasMaxLength(50).HasColumnName("status");
+            entity.Property(e => e.Descricao).HasMaxLength(500).HasColumnName("descricao");
+            entity.Property(e => e.Datahora).HasDefaultValueSql("GETUTCDATE()").HasColumnType("datetime2").HasColumnName("datahora");
+            entity.HasOne(e => e.PedidoNavigation)
+                .WithMany(p => p.Statuspedidos)
+                .HasForeignKey(e => e.Pedidoid)
+                .HasConstraintName("statuspedido_pedidoid_fk");
         });
 
         OnModelCreatingPartial(modelBuilder);

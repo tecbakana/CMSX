@@ -3,8 +3,6 @@
 -- Execute no banco cmsx-db após cmsxDB.pagebuilder.sql
 -- ---------------------------------------------------------------
 
-USE [cmsx-db];
-GO
 
 -- 1. Novos campos de perfil em aplicacao
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='aplicacao' AND COLUMN_NAME='telefone')

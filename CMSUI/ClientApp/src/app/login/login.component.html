@@ -1,30 +1,37 @@
-<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-  <div class="card shadow" style="width: 380px;">
-    <div class="card-body p-4">
-      <img src="/assets/logo.png" alt="Multiplai" class="d-block mx-auto mb-4" style="height:64px;object-fit:contain">
-      <div *ngIf="erro" class="alert alert-danger">{{erro}}</div>
-      <form (ngSubmit)="login()">
-        <div class="mb-3">
-          <label class="form-label">Login</label>
-          <input type="text" class="form-control" [(ngModel)]="apelido" name="apelido" required autofocus>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Senha</label>
-          <input type="password" class="form-control" [(ngModel)]="senha" name="senha" required>
-        </div>
-        <button type="submit" class="btn btn-primary w-100" [disabled]="carregando">
-          {{ carregando ? 'Entrando...' : 'Entrar' }}
-        </button>
-      </form>
-      <div class="d-flex align-items-center my-3">
-        <hr class="flex-grow-1"><span class="px-2 text-muted small">ou</span><hr class="flex-grow-1">
+<div class="login-shell">
+  <div class="login-card">
+
+    <img src="/assets/logo.png" alt="Multiplai" class="login-logo"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+    <div class="login-logo-placeholder" style="display:none">M</div>
+
+    <div class="login-title">Multiplai</div>
+    <div class="login-sub">Faça login para continuar</div>
+
+    <div *ngIf="erro" class="alert alert-danger mb-3">{{erro}}</div>
+
+    <form (ngSubmit)="login()">
+      <div class="mb-3">
+        <label class="form-label">Login</label>
+        <input type="text" class="form-control" [(ngModel)]="apelido" name="apelido" required autofocus>
       </div>
-      <button type="button" class="btn btn-outline-secondary w-100" (click)="loginDemo()" [disabled]="carregando">
-        <i class="bi bi-play-circle me-1"></i>Experimentar demo
+      <div class="mb-4">
+        <label class="form-label">Senha</label>
+        <input type="password" class="form-control" [(ngModel)]="senha" name="senha" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100" [disabled]="carregando">
+        {{ carregando ? 'Entrando...' : 'Entrar' }}
       </button>
-      <p class="text-center mt-3 mb-0 text-muted small">
-        Não tem conta? <a routerLink="/signup">Criar conta</a>
-      </p>
-    </div>
+    </form>
+
+    <div class="login-divider">ou</div>
+
+    <button type="button" class="btn btn-outline-secondary w-100" (click)="loginDemo()" [disabled]="carregando">
+      Experimentar demo
+    </button>
+
+    <p class="text-center mt-4 mb-0" style="font-size:13px;color:var(--muted)">
+      Não tem conta? <a routerLink="/signup">Criar conta</a>
+    </p>
   </div>
 </div>

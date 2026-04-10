@@ -3,8 +3,6 @@
 -- Execute no banco cmsx-db após cmsxDB.tenant_demo.sql
 -- ---------------------------------------------------------------
 
-USE [cmsx-db];
-GO
 
 IF NOT EXISTS (SELECT 1 FROM [dbo].[aplicacao] WHERE [url] = 'multiplai')
 BEGIN

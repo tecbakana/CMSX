@@ -2,23 +2,43 @@ using CMSUI.Models;
 using CMSUI.Services;
 using CMSXDAO;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
-var connPostgres = builder.Configuration.GetConnectionString("NPGSQL");
 var connSqlServer = builder.Configuration.GetConnectionString("SqlServer");
-if (!string.IsNullOrWhiteSpace(connPostgres))
-    builder.Services.AddDbContext<CmsxDbContext>(o => o.UseNpgsql(connPostgres));
-else
-    builder.Services.AddDbContext<CmsxDbContext>(o => o.UseSqlServer(connSqlServer));
-builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<CmsxDbContext>(o => o.UseSqlServer(connSqlServer));
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name         = "Authorization",
+        Type         = SecuritySchemeType.Http,
+        Scheme       = "bearer",
+        BearerFormat = "JWT",
+        In           = ParameterLocation.Header,
+        Description  = "Informe o token JWT obtido em /auth/login"
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 builder.Services.AddCMSXDAL();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IAgentIAFactory, AgentIAFactory>();
+builder.Services.AddHostedService<CMSUI.Services.PedidosServiceBusConsumer>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -39,10 +59,8 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseStaticFiles();
 app.UseRouting();
