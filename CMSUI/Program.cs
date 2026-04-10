@@ -35,10 +35,25 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+// Registro de serviços personalizados
 builder.Services.AddCMSXDAL();
 builder.Services.AddHttpClient();
+
+// Registro do factory de agentes de IA
 builder.Services.AddSingleton<IAgentIAFactory, AgentIAFactory>();
+
+// Registro do consumer de mensagens de pedido
 builder.Services.AddHostedService<CMSUI.Services.PedidosServiceBusConsumer>();
+
+// Registro do publisher de eventos de pedido
+builder.Services.AddScoped<PedidoServiceBusPublisher>(ps=>{
+    var config = ps.GetRequiredService<IConfiguration>();
+    var logger = ps.GetRequiredService<ILogger<PedidoServiceBusPublisher>>();
+    return new PedidoServiceBusPublisher(config, logger);
+});
+
+// Configuração de autenticação JWT
 
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

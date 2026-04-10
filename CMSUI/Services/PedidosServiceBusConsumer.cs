@@ -119,6 +119,23 @@ public class PedidosServiceBusConsumer : BackgroundService
                 Datahora       = DateTime.UtcNow
             });
 
+            pedido.Statusatual = msg.Status;
+
+            switch (msg.Evento)
+            {
+                case "pagamento.confirmado":
+                    // baixar estoque aqui (quando implementado)
+                    break;
+                case "pagamento.recusado":
+                case "pagamento.timeout":
+                case "pagamento.erro":
+                    // notificar operador aqui (quando implementado)
+                    break;
+                case "pagamento.pendente":
+                    // guardar link/codigo aqui (quando campos existirem no modelo)
+                    break;
+            }
+
             await ctx.SaveChangesAsync();
             await args.CompleteMessageAsync(args.Message);
 
@@ -146,5 +163,6 @@ public class PedidosServiceBusConsumer : BackgroundService
         public decimal? Valorpedido  { get; set; }
         public string?  Status       { get; set; }
         public string?  Descricao    { get; set; }
+        public string? Evento { get; set; }
     }
 }
