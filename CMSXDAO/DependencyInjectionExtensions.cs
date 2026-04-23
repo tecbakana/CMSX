@@ -26,6 +26,7 @@ namespace CMSXDAO
             services.AddScoped<IResortDAL, ResortDAL>();
             services.AddScoped<IRoteiroDAL, RoteiroDAL>();
             services.AddScoped<IUsuarioDAL, UsuarioDAL>();
+            services.AddScoped<IClienteLojaDAL, ClienteLojaDAL>();
             return services;
         }
     }

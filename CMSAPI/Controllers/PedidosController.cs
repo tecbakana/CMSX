@@ -98,6 +98,7 @@ public class PedidosController : Controller
             Clientenome  = dto.Clientenome,
             Clienteemail = dto.Clienteemail,
             Valorpedido  = dto.Valorpedido,
+            MetodoPagamento = dto.MetodoPagamento,
             Statusatual  = "aguardando_envio",
             Datainclusao = DateTime.UtcNow
         };
@@ -157,6 +158,7 @@ public class PedidosController : Controller
     }
 
     [HttpPost("{id}/reenviar")]
+    [AllowAnonymous]
     public async Task<IActionResult> Reenviar(Guid id)
     {
         var (acessoTotal, claimAppId) = UserContext();

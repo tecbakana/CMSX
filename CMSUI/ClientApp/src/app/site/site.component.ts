@@ -2,6 +2,7 @@ import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { HttpClient } from '@angular/common/http';
+import { StringService } from '../services/string.service';
 
 @Component({ templateUrl: './site.component.html' })
 export class SiteComponent implements OnInit, OnDestroy {
@@ -23,13 +24,16 @@ export class SiteComponent implements OnInit, OnDestroy {
     private router: Router,
     private http: HttpClient,
     private sanitizer: DomSanitizer,
-    @Inject('BASE_URL') private baseUrl: string
+    @Inject('BASE_URL') private baseUrl: string,
+    private stringService: StringService
   ) {}
 
   ngOnInit() {
     this.slug = this.route.snapshot.paramMap.get('slug');
     this.previewId = this.route.snapshot.paramMap.get('id');
-    this.areaAtualUrl = this.route.snapshot.paramMap.get('area') ?? '';
+    const areaParam = this.route.snapshot.paramMap.get('area') ?? '';
+    this.areaAtualUrl = this.stringService.decode(areaParam);
+    //this.areaAtualUrl = this.stringService.decode(this.route.snapshot.paramMap.get('area') ?? '');
 
     const url = this.slug
       ? `${this.baseUrl}site/slug/${this.slug}`
@@ -43,9 +47,16 @@ export class SiteComponent implements OnInit, OnDestroy {
         this.carregando = false;
         if (!this.areaAtualUrl) {
           const areas: any[] = r.areas ?? [];
+
+          
           const home = areas.find((a: any) => a.url?.toLowerCase() === 'home' && a.temLayout);
           const primeira = areas.find((a: any) => a.temLayout);
-          this.areaAtualUrl = home?.url ?? primeira?.url ?? areas[0]?.url ?? '';
+          console.log('[area areas]', areas);
+          this.route.paramMap.subscribe(params => {
+            const a = params.get('area');
+            console.log('[area paramMap]',a);
+            if (a) this.areaAtualUrl = a;
+          });
         }
       },
       error: e => {

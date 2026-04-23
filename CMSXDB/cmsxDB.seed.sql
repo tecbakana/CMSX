@@ -28,8 +28,10 @@ INSERT INTO [dbo].[modulo] (ModuloId, Nome, Url, Posicao) VALUES
 ('MOD-004', 'Areas',        '/areas',        4),
 ('MOD-005', 'Imagens',      '/imagens',      5),
 ('MOD-006', 'Usuarios',     '/usuarios',     6),
-('MOD-007', 'Formularios',  '/formularios',  7),
-('MOD-008', 'Produtos',     '/produtos',     8);
+('MOD-007', 'Formularios',  '/formularios',    7),
+('MOD-008', 'Produtos',     '/produtos',       8),
+('MOD-009', 'Page Builder', '/page-builder',   9),
+('MOD-010', 'Page Builder v2', '/page-builder-v2', 10);
 GO
 
 -- Categorias de conteudo
@@ -81,7 +83,9 @@ INSERT INTO [dbo].[relmoduloaplicacao] (RelacaoId, AplicacaoId, ModuloId) VALUES
 ('REL-MA-005', 'APP-001', 'MOD-005'),
 ('REL-MA-006', 'APP-001', 'MOD-006'),
 ('REL-MA-007', 'APP-001', 'MOD-007'),
-('REL-MA-008', 'APP-001', 'MOD-008');
+('REL-MA-008', 'APP-001', 'MOD-008'),
+('REL-MA-009', 'APP-001', 'MOD-009'),
+('REL-MA-010', 'APP-001', 'MOD-010');
 GO
 
 -- Vincula modulos ao usuario
@@ -93,7 +97,9 @@ INSERT INTO [dbo].[relmodulousuario] (RelacaoId, ModuloId, UsuarioId) VALUES
 ('REL-MU-005', 'MOD-005', 'USR-001'),
 ('REL-MU-006', 'MOD-006', 'USR-001'),
 ('REL-MU-007', 'MOD-007', 'USR-001'),
-('REL-MU-008', 'MOD-008', 'USR-001');
+('REL-MU-008', 'MOD-008', 'USR-001'),
+('REL-MU-009', 'MOD-009', 'USR-001'),
+('REL-MU-010', 'MOD-010', 'USR-001');
 GO
 
 -- --------------------------------------------------

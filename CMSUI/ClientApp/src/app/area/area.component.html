@@ -59,7 +59,10 @@
         <td>{{item.posicao}}</td>
         <td>
           <button class="btn btn-outline-primary btn-sm me-1" (click)="editar(item)">Editar</button>
-          <button class="btn btn-outline-danger btn-sm" (click)="excluir(item.areaid)">Excluir</button>
+          <button class="btn btn-outline-danger btn-sm me-1" (click)="excluir(item.areaid)">Excluir</button>
+          <a [routerLink]="['/page-builder-v2', item.areaid]" class="btn btn-outline-secondary btn-sm">
+            Experimentar novo Page Builder <span class="badge bg-warning text-dark ms-1">BETA</span>
+          </a>
         </td>
       </tr>
       <tr *ngIf="lista.length === 0">

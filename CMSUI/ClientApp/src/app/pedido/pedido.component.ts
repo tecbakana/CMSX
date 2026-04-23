@@ -19,7 +19,6 @@ export class PedidoComponent implements OnInit {
 
   constructor(
     private http: HttpClient,
-    @Inject('BASE_URL') private baseUrl: string,
     private adminCtx: AdminContextService
   ) {}
 
@@ -42,7 +41,7 @@ export class PedidoComponent implements OnInit {
   carregar() {
     this.selecionado = null;
     this.timeline = [];
-    this.http.get<any[]>(this.baseUrl + 'pedidos', { params: this.appParams() })
+    this.http.get<any[]>('/pedidos', { params: this.appParams() })
       .subscribe(r => this.lista = r);
   }
 
@@ -55,7 +54,7 @@ export class PedidoComponent implements OnInit {
     this.selecionado = pedido;
     this.timeline = [];
     this.carregandoTimeline = true;
-    this.http.get<any[]>(`${this.baseUrl}pedidos/${pedido.pedidoid}/timeline`)
+    this.http.get<any[]>(`/pedidos/${pedido.pedidoid}/timeline`)
       .subscribe({
         next: t => { this.timeline = t; this.carregandoTimeline = false; },
         error: () => { this.carregandoTimeline = false; }

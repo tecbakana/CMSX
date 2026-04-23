@@ -41,4 +41,6 @@ public partial class Area
 
     public int? Tipoarea { get; set; }
     public string? Layout { get; set; }
+
+    public string? PageBuilderVersion { get; set; }
 }

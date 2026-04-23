@@ -1,0 +1,470 @@
+<div class="container-fluid py-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Page Builder v2
+      <span class="badge bg-primary ms-2" style="font-size:.65rem;vertical-align:middle">CSS Grid</span>
+    </h4>
+    <div class="d-flex gap-2 align-items-center">
+      <button class="btn btn-link btn-sm text-muted p-0" (click)="irParaV1()" title="Voltar ao Page Builder v1">
+        <i class="bi bi-arrow-left me-1"></i>Voltar ao v1
+      </button>
+      <button *ngIf="areaid" class="btn btn-outline-secondary btn-sm" (click)="abrirModalRascunho()">
+        <i class="bi bi-pencil-square me-1"></i>Importar rascunho
+      </button>
+      <button *ngIf="areaid" class="btn btn-outline-info btn-sm" (click)="abrirPreview()">
+        <i class="bi bi-box-arrow-up-right me-1"></i>Preview
+      </button>
+      <button class="btn btn-success btn-sm" (click)="salvarLayout()"
+        [disabled]="salvando || !areaid || layoutAtual.length === 0">
+        <span *ngIf="salvando" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!salvando" class="bi bi-floppy me-1"></i>
+        {{ salvando ? 'Salvando…' : 'Salvar Layout' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="alert alert-info py-2 d-flex align-items-center gap-2 mb-2" role="alert">
+    <i class="bi bi-info-circle-fill"></i>
+    <span><strong>Page Builder Beta</strong> — suas alterações são independentes do v1. O layout v1 só é substituído ao salvar.</span>
+  </div>
+
+  <div *ngIf="erro" class="alert alert-danger alert-dismissible py-2" role="alert">
+    {{ erro }}<button type="button" class="btn-close" (click)="erro=''"></button>
+  </div>
+  <div *ngIf="sucesso" class="alert alert-success alert-dismissible py-2" role="alert">
+    {{ sucesso }}<button type="button" class="btn-close" (click)="sucesso=''"></button>
+  </div>
+
+  <!-- Modal: migração v1 → v2 -->
+  <div *ngIf="mostrarModalMigracao" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.4)">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Salvar layout — primeira vez em v2</h5>
+        </div>
+        <div class="modal-body">
+          <p>Esta área ainda usa o layout do Page Builder v1. O que deseja fazer?</p>
+          <ul class="mb-0">
+            <li><strong>Migrar permanentemente:</strong> a área passa a usar o v2 como padrão.</li>
+            <li><strong>Manter como beta:</strong> salva o layout v2, mas a área continua associada ao v1.</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" (click)="manterBeta()">Manter como beta</button>
+          <button class="btn btn-primary btn-sm" (click)="confirmarMigracao()">Migrar permanentemente para v2</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+
+    <!-- ── Painel lateral ── -->
+    <div class="col-md-3 col-xl-2">
+      <div class="card shadow-sm h-100">
+        <div class="card-header fw-semibold py-2">
+          <i class="bi bi-sliders me-1"></i>Configuração
+        </div>
+        <div class="card-body d-flex flex-column gap-3">
+
+          <div>
+            <label class="form-label form-label-sm fw-semibold">Área do site</label>
+            <select class="form-select form-select-sm" [(ngModel)]="areaid" (change)="onAreaChange()">
+              <option value="">— Selecione —</option>
+              <option *ngFor="let a of areas" [value]="a.areaid">{{ a.nome }}</option>
+            </select>
+          </div>
+
+          <div *ngIf="areaid">
+            <small class="text-muted d-block">
+              <i class="bi bi-grid me-1"></i>{{ COLS }} colunas × {{ totalRows }} linhas
+            </small>
+            <small class="text-muted d-block">{{ layoutAtual.length }} bloco(s) no canvas</small>
+          </div>
+
+          <hr class="my-0">
+
+          <div>
+            <label class="form-label form-label-sm fw-semibold">
+              <i class="bi bi-box-seam me-1"></i>Blocos disponíveis
+            </label>
+            <small class="text-muted d-block mb-2" style="font-size:.75rem">
+              Arraste para o canvas ou clique para adicionar ao final
+            </small>
+
+            <div *ngIf="blocos.length === 0" class="text-muted small fst-italic">Carregando…</div>
+
+            <div *ngFor="let b of blocos"
+                 class="catalog-item"
+                 cdkDrag
+                 [cdkDragData]="b"
+                 (cdkDragMoved)="onCatalogDragMoved($event)"
+                 (cdkDragEnded)="onCatalogDragEnded($event, b)"
+                 (click)="adicionarBlocoClick(b)"
+                 [title]="b.descricao">
+
+              <!-- Preview visual durante o drag -->
+              <div *cdkDragPreview class="cdk-drag-preview">
+                <i class="bi {{ b.icone }} me-1"></i>{{ b.nome }}
+              </div>
+              <!-- Placeholder no lugar original -->
+              <div *cdkDragPlaceholder class="catalog-item catalog-item-placeholder">
+                <i class="bi {{ b.icone }}"></i><span>{{ b.nome }}</span>
+              </div>
+
+              <i class="bi {{ b.icone }}"></i>
+              <span>{{ b.nome }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Canvas ── -->
+    <div class="col-md-9 col-xl-10">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center py-2">
+          <span class="fw-semibold"><i class="bi bi-grid me-1"></i>Canvas (12 colunas)</span>
+          <small class="text-muted d-none d-md-block">
+            <i class="bi bi-grip-horizontal me-1"></i>Arraste header para mover ·
+            <i class="bi bi-arrows-angle-expand me-1 ms-1"></i>Handles nas bordas para redimensionar
+          </small>
+        </div>
+        <div class="card-body p-2">
+
+          <div *ngIf="!areaid" class="text-center text-muted py-5">
+            <i class="bi bi-arrow-left-circle" style="font-size:2.5rem"></i>
+            <p class="mt-2">Selecione uma área no painel lateral para começar.</p>
+          </div>
+
+          <div #canvasRef class="pb-canvas"
+               [class.d-none]="!areaid"
+               [style.grid-template-rows]="canvasRowTemplate">
+
+            <!-- Highlight de destino ao arrastar do catálogo -->
+            <div *ngIf="isDraggingFromCatalog && canvasHighlightCol > 0"
+                 class="pb-cell-highlight"
+                 [style.grid-column]="canvasHighlightCol + ' / span ' + canvasHighlightColSpan"
+                 [style.grid-row]="canvasHighlightRow + ' / span 1'">
+            </div>
+
+            <!-- Empty state -->
+            <div *ngIf="layoutAtual.length === 0 && !isDraggingFromCatalog"
+                 class="pb-empty-state">
+              <i class="bi bi-layout-wtf"></i>
+              <p>Nenhum bloco no canvas.<br>Arraste um bloco do painel ou clique nele.</p>
+            </div>
+
+            <!-- Blocos -->
+            <div *ngFor="let bloco of layoutAtual; let i = index; trackBy: trackByIndex"
+                 class="pb-bloco"
+                 [class.pb-bloco-resizing]="resizingIndex === i"
+                 [class.pb-bloco-novo]="blocoNovosIndices.has(i)"
+                 cdkDrag
+                 [cdkDragBoundary]="canvasRef"
+                 [style.grid-column]="bloco.col + ' / span ' + bloco.colSpan"
+                 [style.grid-row]="bloco.row + ' / span ' + bloco.rowSpan"
+                 (cdkDragEnded)="onBlocoDragEnded($event, i)">
+
+              <!-- Placeholder (ocupa a célula original durante o drag) -->
+              <div *cdkDragPlaceholder class="pb-bloco-placeholder"></div>
+
+              <!-- Preview sob o cursor durante o drag -->
+              <div *cdkDragPreview class="cdk-drag-preview">
+                <i class="bi {{ bloco._icone }} me-1"></i>{{ bloco._nome }}
+                <span class="ms-2 text-muted" style="font-size:.7rem">
+                  {{ bloco.colSpan }}×{{ bloco.rowSpan }}
+                </span>
+              </div>
+
+              <!-- Header: drag handle + ações -->
+              <div class="pb-bloco-header" cdkDragHandle>
+                <span class="pb-bloco-title">
+                  <i class="bi {{ bloco._icone }}"></i>
+                  {{ bloco._nome }}
+                  <span class="badge bg-light text-secondary ms-1 font-monospace" style="font-size:.6rem">
+                    c{{ bloco.col }} l{{ bloco.row }} · {{ bloco.colSpan }}×{{ bloco.rowSpan }}
+                  </span>
+                </span>
+                <div class="pb-bloco-actions" (mousedown)="$event.stopPropagation()">
+                  <button class="btn btn-outline-primary btn-sm py-2 px-3"
+                          (click)="abrirEditorBloco(i)" title="Editar conteúdo">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm py-2 px-3"
+                          (click)="removerBloco(i)" title="Remover bloco">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Body: preview das configs -->
+              <div class="pb-bloco-body">
+                <div *ngIf="configVisual(bloco).length > 0" class="pb-bloco-config">
+                  <div *ngFor="let p of configVisual(bloco)" class="pb-config-item">
+                    <small class="text-muted">{{ p.label }}:</small>
+                    <small class="fw-medium ms-1">{{ p.valor }}</small>
+                  </div>
+                </div>
+                <div *ngIf="configVisual(bloco).length === 0" class="text-muted small fst-italic">
+                  Clique em <i class="bi bi-pencil"></i> para configurar.
+                </div>
+              </div>
+
+              <!-- Handle resize: colunas (borda direita) -->
+              <div class="pb-resize-col"
+                   (mousedown)="iniciarResize($event, i, 'col')"
+                   title="Arrastar para ajustar colunas"></div>
+
+              <!-- Handle resize: linhas (borda inferior) -->
+              <div class="pb-resize-row"
+                   (mousedown)="iniciarResize($event, i, 'row')"
+                   title="Arrastar para ajustar linhas"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Modal: importar rascunho ──────────────────────────────────────── -->
+<div *ngIf="importarRascunhoAberto" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil-square me-2 text-secondary"></i>Importar rascunho
+        </h5>
+        <button type="button" class="btn-close" (click)="fecharModalRascunho()"></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Seletor de modo -->
+        <div class="btn-group w-100 mb-3" role="group">
+          <button type="button"
+                  class="btn btn-sm"
+                  [class.btn-secondary]="importarModo === 'upload'"
+                  [class.btn-outline-secondary]="importarModo !== 'upload'"
+                  (click)="trocarModoRascunho('upload')">
+            <i class="bi bi-upload me-1"></i>Upload de imagem
+          </button>
+          <button type="button"
+                  class="btn btn-sm"
+                  [class.btn-secondary]="importarModo === 'canvas'"
+                  [class.btn-outline-secondary]="importarModo !== 'canvas'"
+                  (click)="trocarModoRascunho('canvas')">
+            <i class="bi bi-pencil me-1"></i>Desenhar rascunho
+          </button>
+        </div>
+
+        <!-- Modo upload -->
+        <div *ngIf="importarModo === 'upload'">
+          <p class="text-muted small mb-2">
+            Envie uma foto ou scan do seu rascunho em papel (JPG ou PNG). A IA irá identificar os blocos.
+          </p>
+
+          <div class="row g-3">
+            <!-- Wireframe -->
+            <div class="col-md-6">
+              <label class="form-label form-label-sm fw-semibold">
+                <i class="bi bi-pencil-square me-1 text-secondary"></i>Diagrama / Wireframe <span class="text-danger">*</span>
+              </label>
+              <input type="file" class="form-control form-control-sm"
+                     accept="image/jpeg,image/png"
+                     (change)="onArquivoRascunho($event)">
+              <div *ngIf="rascunhoPreviewUrl" class="mt-2 text-center">
+                <img [src]="rascunhoPreviewUrl" class="img-fluid rounded border" style="max-height:200px" alt="Preview do rascunho">
+              </div>
+            </div>
+
+            <!-- Imagem de fundo -->
+            <div class="col-md-6">
+              <label class="form-label form-label-sm fw-semibold">
+                <i class="bi bi-image me-1 text-info"></i>Imagem de fundo <span class="text-muted fw-normal">(opcional)</span>
+              </label>
+              <input type="file" class="form-control form-control-sm"
+                     accept="image/jpeg,image/png,image/webp"
+                     (change)="onArquivoFundo($event)">
+              <small class="text-muted d-block mt-1" style="font-size:.75rem">
+                Aplicada automaticamente aos blocos que suportam imagem de fundo (hero, banner etc.)
+              </small>
+              <div *ngIf="fundoPreviewUrl" class="mt-2 text-center">
+                <img [src]="fundoPreviewUrl" class="img-fluid rounded border" style="max-height:200px;object-fit:cover" alt="Preview do fundo">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modo canvas -->
+        <div *ngIf="importarModo === 'canvas'">
+          <p class="text-muted small mb-2">
+            Desenhe retângulos para representar os blocos da página. A IA irá mapear cada forma a um tipo de bloco.
+          </p>
+          <canvas #drawCanvasRef
+                  width="600" height="360"
+                  class="draw-canvas"
+                  (mousedown)="onDrawMouseDown($event)"
+                  (mousemove)="onDrawMouseMove($event)"
+                  (mouseup)="onDrawMouseUp()"
+                  (mouseleave)="onDrawMouseUp()"
+                  (touchstart)="onDrawTouchStart($event)"
+                  (touchmove)="onDrawTouchMove($event)"
+                  (touchend)="onDrawTouchEnd()">
+          </canvas>
+          <div class="mt-2 d-flex justify-content-between align-items-center">
+            <small class="text-muted">{{ drawingShapes.length }} forma(s) desenhada(s)</small>
+            <button class="btn btn-outline-secondary btn-sm" (click)="limparDrawCanvas()">
+              <i class="bi bi-eraser me-1"></i>Limpar
+            </button>
+          </div>
+        </div>
+
+        <!-- Erro -->
+        <div *ngIf="importarErro" class="alert alert-warning py-2 mt-3 mb-0">
+          <i class="bi bi-exclamation-triangle me-1"></i>{{ importarErro }}
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" (click)="fecharModalRascunho()" [disabled]="importandoRascunho">Cancelar</button>
+        <button class="btn btn-primary btn-sm" (click)="importarRascunho()" [disabled]="importandoRascunho">
+          <span *ngIf="importandoRascunho" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!importandoRascunho" class="bi bi-stars me-1"></i>
+          {{ importandoRascunho ? 'Interpretando…' : 'Importar com IA' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: galeria picker ─────────────────────────────────────────── -->
+<div *ngIf="galeriaPickerAberto" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-images me-2 text-info"></i>Selecionar imagem</h5>
+        <button type="button" class="btn-close" (click)="galeriaPickerAberto = false"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="galeriaImagens.length === 0" class="text-center text-muted py-4">
+          <i class="bi bi-images" style="font-size:2rem"></i>
+          <p class="mt-2">Nenhuma imagem. Use a Galeria de Mídias no Page Builder v1 para fazer upload.</p>
+        </div>
+        <div class="row g-2">
+          <div *ngFor="let img of galeriaImagens" class="col-6 col-md-4 col-lg-3">
+            <div class="card h-100" style="cursor:pointer" (click)="selecionarImagemParaCampo(img.url)">
+              <img [src]="img.url" class="card-img-top" style="height:100px;object-fit:cover"
+                   [alt]="img.nome" loading="lazy">
+              <div class="card-body p-1">
+                <small class="text-muted text-truncate d-block">{{ img.nome }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" (click)="galeriaPickerAberto = false">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: editor de bloco (mesmo schemaConfig do v1) ─────────────── -->
+<div *ngIf="editandoIndex !== null" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil-square me-2 text-primary"></i>Editar bloco: <strong>{{ editandoNome }}</strong>
+        </h5>
+        <button type="button" class="btn-close" (click)="fecharEditorBloco()"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="editandoCampos.length === 0" class="text-muted fst-italic">
+          Nenhum campo configurável para este bloco.
+        </div>
+        <div class="row g-3">
+          <ng-container *ngFor="let campo of editandoCampos">
+            <div *ngIf="campo.type === 'boolean'" class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" [id]="'campo-' + campo.key"
+                       [(ngModel)]="editandoConfig[campo.key]">
+                <label class="form-check-label" [for]="'campo-' + campo.key">{{ campo.label }}</label>
+              </div>
+            </div>
+            <div *ngIf="campo.type === 'text' || campo.type === 'html'" class="col-12">
+              <label class="form-label form-label-sm">{{ campo.label }}</label>
+              <textarea class="form-control form-control-sm" rows="3"
+                        [(ngModel)]="editandoConfig[campo.key]"
+                        [placeholder]="campo.placeholder"></textarea>
+            </div>
+            <div *ngIf="campo.type === 'color'" class="col-md-4">
+              <label class="form-label form-label-sm">{{ campo.label }}</label>
+              <input type="color" class="form-control form-control-sm form-control-color w-100"
+                     [(ngModel)]="editandoConfig[campo.key]">
+            </div>
+            <div *ngIf="campo.type === 'number'" class="col-md-4">
+              <label class="form-label form-label-sm">{{ campo.label }}</label>
+              <input type="number" class="form-control form-control-sm"
+                     [(ngModel)]="editandoConfig[campo.key]"
+                     [placeholder]="campo.placeholder">
+            </div>
+            <div *ngIf="campo.type === 'url'" class="col-md-6">
+              <label class="form-label form-label-sm">{{ campo.label }}</label>
+              <div class="input-group input-group-sm">
+                <input class="form-control" type="url"
+                       [(ngModel)]="editandoConfig[campo.key]"
+                       [placeholder]="campo.placeholder">
+                <button class="btn btn-outline-info" type="button"
+                        (click)="abrirGaleriaPicker(campo.key)" title="Selecionar da galeria">
+                  <i class="bi bi-images"></i>
+                </button>
+              </div>
+            </div>
+            <div *ngIf="campo.type === 'array'" class="col-12">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label form-label-sm mb-0">{{ campo.label }}</label>
+                <button class="btn btn-outline-secondary btn-sm" (click)="adicionarItem(campo.key)">
+                  <i class="bi bi-plus me-1"></i>Adicionar item
+                </button>
+              </div>
+              <div *ngFor="let item of editandoConfig[campo.key]; let ii = index"
+                   class="d-flex gap-2 align-items-start mb-2 p-2 border rounded bg-light">
+                <div class="flex-fill row g-1">
+                  <div *ngFor="let k of getItemKeys(campo.key)" class="col-md-4">
+                    <input class="form-control form-control-sm" [placeholder]="k"
+                           [(ngModel)]="editandoConfig[campo.key][ii][k]">
+                  </div>
+                </div>
+                <button class="btn btn-outline-danger btn-sm" (click)="removerItem(campo.key, ii)">
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+              <div *ngIf="!editandoConfig[campo.key]?.length" class="text-muted small fst-italic">
+                Nenhum item. Clique em "Adicionar item".
+              </div>
+            </div>
+            <div *ngIf="campo.type !== 'boolean' && campo.type !== 'text' && campo.type !== 'html'
+                        && campo.type !== 'color' && campo.type !== 'number'
+                        && campo.type !== 'url' && campo.type !== 'array'"
+                 class="col-md-6">
+              <label class="form-label form-label-sm">{{ campo.label }}</label>
+              <input class="form-control form-control-sm" type="text"
+                     [(ngModel)]="editandoConfig[campo.key]"
+                     [placeholder]="campo.placeholder">
+            </div>
+          </ng-container>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" (click)="fecharEditorBloco()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" (click)="confirmarEdicaoBloco()">
+          <i class="bi bi-check-lg me-1"></i>Aplicar alterações
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

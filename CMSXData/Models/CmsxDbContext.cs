@@ -594,6 +594,7 @@ public partial class CmsxDbContext : DbContext
             entity.Property(e => e.Clienteemail).HasMaxLength(200).HasColumnName("clienteemail");
             entity.Property(e => e.Valorpedido).HasColumnType("decimal(12,2)").HasColumnName("valorpedido");
             entity.Property(e => e.Statusatual).HasMaxLength(50).HasColumnName("statusatual");
+            entity.Property(e => e.MetodoPagamento).HasMaxLength(50).HasColumnName("metodopagamento");
             entity.Property(e => e.Datainclusao).HasDefaultValueSql("GETUTCDATE()").HasColumnType("datetime2").HasColumnName("datainclusao");
         });
 

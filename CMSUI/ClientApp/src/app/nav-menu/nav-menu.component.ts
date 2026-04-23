@@ -1,12 +1,15 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router, NavigationEnd } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { AdminContextService } from '../admin-context.service';
 
 @Component({
   selector: 'app-nav-menu',
   templateUrl: './nav-menu.component.html'
 })
-export class NavMenuComponent implements OnInit {
+export class NavMenuComponent implements OnInit, OnDestroy {
   isExpanded = false;
   adminExpanded = true;
   isDark = false;
@@ -15,10 +18,13 @@ export class NavMenuComponent implements OnInit {
   aplicacoes: any[] = [];
   tenantSelecionadoId = '';
 
+  private routerSub?: Subscription;
+
   constructor(
     private http: HttpClient,
     @Inject('BASE_URL') private baseUrl: string,
-    public adminCtx: AdminContextService
+    public adminCtx: AdminContextService,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -26,7 +32,26 @@ export class NavMenuComponent implements OnInit {
     this.isDark = saved === 'dark';
     document.documentElement.setAttribute('data-theme', saved);
 
-    this.usuario = JSON.parse(sessionStorage.getItem('usuario') || 'null');
+    this.carregarUsuario();
+
+    this.routerSub = this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe(() => this.carregarUsuario());
+  }
+
+  ngOnDestroy() {
+    this.routerSub?.unsubscribe();
+  }
+
+  private carregarUsuario() {
+    const novoUsuario = JSON.parse(sessionStorage.getItem('usuario') || 'null');
+    const mudou = JSON.stringify(novoUsuario) !== JSON.stringify(this.usuario);
+    if (!mudou) return;
+
+    this.usuario = novoUsuario;
+    this.modulos = [];
+    this.aplicacoes = [];
+
     if (this.usuario) {
       const url = this.usuario.acessoTotal
         ? this.baseUrl + 'modulos'

@@ -11,7 +11,6 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddCors(options =>
@@ -77,8 +76,30 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience            = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
+    })
+    .AddJwtBearer("Salematic", options =>
+    {
+        var salematicKey = builder.Configuration["SalematicJwt:Key"]!;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer           = true,
+            ValidateAudience         = true,
+            ValidateLifetime         = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer              = builder.Configuration["SalematicJwt:Issuer"],
+            ValidAudience            = builder.Configuration["SalematicJwt:Audience"],
+            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(salematicKey))
+        };
     });
 builder.Services.AddAuthorization();
+
+builder.Services.AddHttpClient<SalematicHttpService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Salematic:BaseUrl"]!);
+});
+
+builder.Services.AddControllers()
+     .AddJsonOptions(o => o.JsonSerializerOptions.PropertyNameCaseInsensitive = true);
 
 var app = builder.Build();
 

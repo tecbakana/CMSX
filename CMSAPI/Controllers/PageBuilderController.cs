@@ -1,3 +1,5 @@
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -76,7 +78,7 @@ namespace CMSAPI.Controllers
             if (area == null) return NotFound();
             if (!acessoTotal && area.Aplicacaoid != claimAppId) return Forbid();
 
-            return Ok(new { area.Areaid, area.Nome, layout = area.Layout ?? "{\"blocos\":[]}" });
+            return Ok(new { area.Areaid, area.Nome, layout = area.Layout ?? "{\"blocos\":[]}", version = area.PageBuilderVersion ?? "v1" });
         }
 
         [Authorize]
@@ -569,6 +571,119 @@ Regras importantes:
             return sb.ToString();
         }
 
+        // ── Versão do Page Builder da área ──────────────────────────────────
+
+        public class AreaVersionDto
+        {
+            public string Version { get; set; } = "v1";
+        }
+
+        [Authorize]
+        [HttpPut("area-version/{areaid}")]
+        public IActionResult AtualizarAreaVersion(string areaid, [FromBody] AreaVersionDto dto)
+        {
+            var (acessoTotal, claimAppId) = UserContext();
+            var area = _context.Areas.FirstOrDefault(a => a.Areaid == areaid);
+            if (area == null) return NotFound();
+            if (!acessoTotal && area.Aplicacaoid != claimAppId) return Forbid();
+
+            if (dto.Version != "v1" && dto.Version != "v2")
+                return BadRequest("Versão inválida. Use 'v1' ou 'v2'.");
+
+            area.PageBuilderVersion = dto.Version;
+            _context.SaveChanges();
+            return Ok();
+        }
+
+        // ── Interpretação de rascunho via IA ────────────────────────────────
+
+        public class InterpretarRascunhoDto
+        {
+            public IFormFile Arquivo { get; set; } = null!;
+        }
+
+        [Authorize]
+        [HttpPost("interpretar-rascunho")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> InterpretarRascunho([FromForm] InterpretarRascunhoDto dto)
+        {
+            var arquivo = dto.Arquivo;
+            if (arquivo == null || arquivo.Length == 0)
+                return BadRequest("Arquivo de imagem obrigatório.");
+
+            var (_, claimAppId) = UserContext();
+            var iaConfig = claimAppId != null
+                ? _context.IaConfigs.FirstOrDefault(c => c.Aplicacaoid == claimAppId)
+                : null;
+
+            var tiposDisponiveis = _context.DictBlocos
+                .Select(b => b.Tipobloco)
+                .ToHashSet();
+
+            var tiposJson = string.Join(", ", tiposDisponiveis.OrderBy(t => t));
+
+            var prompt = $@"Analise este rascunho/wireframe de página web e identifique os blocos de conteúdo e suas posições em um grid de 12 colunas.
+
+Para cada bloco identificado, retorne:
+- tipo: o tipo de bloco mais adequado. Escolha APENAS entre os tipos disponíveis: [{tiposJson}]
+- row: linha no grid (começando em 1)
+- col: coluna inicial no grid (1 a 12)
+- rowSpan: quantidade de linhas que o bloco ocupa (mínimo 1)
+- colSpan: quantidade de colunas que o bloco ocupa (1 a 12, total das colunas = 12 por linha)
+- descricao: descrição breve do conteúdo identificado no rascunho
+
+Retorne APENAS um JSON válido, sem texto adicional:
+{{""blocos"":[{{""tipo"":""..."",""row"":1,""col"":1,""rowSpan"":1,""colSpan"":12,""descricao"":""...""}}]}}";
+
+            try
+            {
+                byte[] imageBytes;
+                using (var ms = new MemoryStream())
+                {
+                    await arquivo.CopyToAsync(ms);
+                    imageBytes = ms.ToArray();
+                }
+                var mimeType = arquivo.ContentType ?? "image/jpeg";
+
+                var agente = _agentFactory.Criar(iaConfig?.Provedor, iaConfig?.Apikey, iaConfig?.Modelo);
+                var resposta = LimparMarkdown(await agente.GerarComImagemAsync(imageBytes, mimeType, prompt));
+
+                using var doc = JsonDocument.Parse(resposta);
+                var blocosEl = doc.RootElement.GetProperty("blocos");
+
+                var blocosMapeados = blocosEl.EnumerateArray().Select(b =>
+                {
+                    var tipo = b.TryGetProperty("tipo", out var t) ? t.GetString() ?? "" : "";
+                    if (!tiposDisponiveis.Contains(tipo))
+                        tipo = "bloco-generico";
+
+                    return new
+                    {
+                        tipo,
+                        row      = b.TryGetProperty("row",      out var r)  ? r.GetInt32()  : 1,
+                        col      = b.TryGetProperty("col",      out var c)  ? c.GetInt32()  : 1,
+                        rowSpan  = b.TryGetProperty("rowSpan",  out var rs) ? rs.GetInt32() : 1,
+                        colSpan  = b.TryGetProperty("colSpan",  out var cs) ? cs.GetInt32() : 12,
+                        descricao = b.TryGetProperty("descricao", out var d) ? d.GetString() ?? "" : ""
+                    };
+                }).ToList();
+
+                return Ok(new { blocos = blocosMapeados });
+            }
+            catch (JsonException ex)
+            {
+                return UnprocessableEntity(new { erro = "IA retornou JSON inválido.", detalhe = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(502, $"Erro ao chamar a IA: {ex.Message}");
+            }
+        }
+
         public class GerarLayoutDto
         {
             public string Descricao { get; set; } = "";
@@ -580,6 +695,131 @@ Regras importantes:
         public class BlocoPreDefinidoDto
         {
             public string Tipo { get; set; } = "";
+        }
+
+        // ── Importar wireframe + imagem de fundo via IA ──────────────────────
+
+        public class ImportarComFundoDto
+        {
+            public IFormFile Arquivo { get; set; } = null!;
+            public IFormFile? ImagemFundo { get; set; }
+        }
+
+        private static readonly string[] _tiposImagemPermitidos = ["image/jpeg", "image/png", "image/webp"];
+        private const long _maxBytesImagem = 5 * 1024 * 1024;
+
+        [Authorize]
+        [HttpPost("importar-com-fundo")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ImportarComFundo([FromForm] ImportarComFundoDto dto)
+        {
+            if (dto.Arquivo == null || dto.Arquivo.Length == 0)
+                return BadRequest("Arquivo de wireframe obrigatório.");
+
+            var (_, claimAppId) = UserContext();
+            var iaConfig = claimAppId != null
+                ? _context.IaConfigs.FirstOrDefault(c => c.Aplicacaoid == claimAppId)
+                : null;
+
+            // 1. Faz upload da imagem de fundo para o Blob Storage (se fornecida)
+            string? urlFundo = null;
+            if (dto.ImagemFundo != null && dto.ImagemFundo.Length > 0)
+            {
+                if (!_tiposImagemPermitidos.Contains(dto.ImagemFundo.ContentType))
+                    return BadRequest("Tipo de imagem de fundo não permitido. Use JPG, PNG ou WebP.");
+                if (dto.ImagemFundo.Length > _maxBytesImagem)
+                    return BadRequest("Imagem de fundo muito grande. Limite: 5 MB.");
+
+                var connStr = _config["AzureStorage:ConnectionString"];
+                if (!string.IsNullOrWhiteSpace(connStr))
+                {
+                    var containerName = _config["AzureStorage:Container"] ?? "cms-imagens";
+                    var container = new BlobContainerClient(connStr, containerName);
+                    var ext = Path.GetExtension(dto.ImagemFundo.FileName);
+                    var blobName = $"{claimAppId ?? "global"}/{Guid.NewGuid()}{ext}";
+                    var blob = container.GetBlobClient(blobName);
+                    using var stream = dto.ImagemFundo.OpenReadStream();
+                    await blob.UploadAsync(stream, new BlobUploadOptions
+                    {
+                        HttpHeaders = new BlobHttpHeaders { ContentType = dto.ImagemFundo.ContentType }
+                    });
+                    urlFundo = blob.Uri.ToString();
+                }
+            }
+
+            // 2. Interpreta o wireframe com IA
+            var tiposDisponiveis = _context.DictBlocos.Select(b => b.Tipobloco).ToHashSet();
+            var tiposJson = string.Join(", ", tiposDisponiveis.OrderBy(t => t));
+
+            var prompt = $@"Analise este rascunho/wireframe de página web e identifique os blocos de conteúdo e suas posições em um grid de 12 colunas.
+
+Para cada bloco identificado, retorne:
+- tipo: o tipo de bloco mais adequado. Escolha APENAS entre os tipos disponíveis: [{tiposJson}]
+- row: linha no grid (começando em 1)
+- col: coluna inicial no grid (1 a 12)
+- rowSpan: quantidade de linhas que o bloco ocupa (mínimo 1)
+- colSpan: quantidade de colunas que o bloco ocupa (1 a 12, total das colunas = 12 por linha)
+- descricao: descrição breve do conteúdo identificado no rascunho
+
+Retorne APENAS um JSON válido, sem texto adicional:
+{{""blocos"":[{{""tipo"":""..."",""row"":1,""col"":1,""rowSpan"":1,""colSpan"":12,""descricao"":""...""}}]}}";
+
+            try
+            {
+                byte[] imageBytes;
+                using (var ms = new MemoryStream())
+                {
+                    await dto.Arquivo.CopyToAsync(ms);
+                    imageBytes = ms.ToArray();
+                }
+                var mimeType = dto.Arquivo.ContentType ?? "image/jpeg";
+
+                var agente = _agentFactory.Criar(iaConfig?.Provedor, iaConfig?.Apikey, iaConfig?.Modelo);
+                var resposta = LimparMarkdown(await agente.GerarComImagemAsync(imageBytes, mimeType, prompt));
+
+                using var doc = JsonDocument.Parse(resposta);
+                var blocosEl = doc.RootElement.GetProperty("blocos");
+
+                var blocosMapeados = blocosEl.EnumerateArray().Select(b =>
+                {
+                    var tipo = b.TryGetProperty("tipo", out var t) ? t.GetString() ?? "" : "";
+                    if (!tiposDisponiveis.Contains(tipo)) tipo = "bloco-generico";
+
+                    // 3. Injeta URL do fundo nos campos de imagem de cada bloco que os suporta
+                    var config = new Dictionary<string, object?>();
+                    if (urlFundo != null)
+                    {
+                        var campoFundo = _camposImagem.FirstOrDefault(c => c.tipo == tipo).campo;
+                        if (campoFundo != null)
+                            config[campoFundo] = urlFundo;
+                    }
+
+                    return new
+                    {
+                        tipo,
+                        config,
+                        row      = b.TryGetProperty("row",      out var r)  ? r.GetInt32()  : 1,
+                        col      = b.TryGetProperty("col",      out var c)  ? c.GetInt32()  : 1,
+                        rowSpan  = b.TryGetProperty("rowSpan",  out var rs) ? rs.GetInt32() : 1,
+                        colSpan  = b.TryGetProperty("colSpan",  out var cs) ? cs.GetInt32() : 12,
+                        descricao = b.TryGetProperty("descricao", out var d) ? d.GetString() ?? "" : ""
+                    };
+                }).ToList();
+
+                return Ok(new { blocos = blocosMapeados, urlFundo });
+            }
+            catch (JsonException ex)
+            {
+                return UnprocessableEntity(new { erro = "IA retornou JSON inválido.", detalhe = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(502, $"Erro ao chamar a IA: {ex.Message}");
+            }
         }
     }
 }

@@ -25,6 +25,7 @@ const PROXY_CONFIG = [
       "/site",
       "/layouttemplates",
       "/pedidos",
+      "/api/loja",
       "/swagger"
     ],
     proxyTimeout: 60000,

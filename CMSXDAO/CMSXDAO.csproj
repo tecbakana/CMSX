@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CMSXRepo\CMSXRepo.csproj" />
     <ProjectReference Include="..\ICMSX\ICMSX.csproj" />
   </ItemGroup>
 

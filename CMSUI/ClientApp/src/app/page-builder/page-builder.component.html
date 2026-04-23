@@ -400,25 +400,25 @@
                 </div>
                 <!-- Ações -->
                 <div class="btn-group btn-group-sm">
-                  <button class="btn btn-outline-primary" title="Editar conteúdo do bloco"
+                  <button class="btn btn-outline-primary py-2 px-3" title="Editar conteúdo do bloco"
                     (click)="abrirEditorBloco(i)">
-                    <i class="bi bi-pencil"></i>
+                    <i class="bi bi-pencil-square"></i>
                   </button>
-                  <button class="btn btn-outline-warning" title="Trocar tipo do bloco"
+                  <button class="btn btn-outline-warning py-2 px-3" title="Trocar tipo do bloco"
                     (click)="trocandoIndex = (trocandoIndex === i ? null : i)">
                     <i class="bi bi-arrow-left-right"></i>
                   </button>
-                  <button class="btn btn-outline-secondary" title="Mover para cima"
+                  <button class="btn btn-outline-secondary py-2 px-3" title="Mover para cima"
                     (click)="moverBloco(i, 'up')" [disabled]="i === 0">
                     <i class="bi bi-arrow-up"></i>
                   </button>
-                  <button class="btn btn-outline-secondary" title="Mover para baixo"
+                  <button class="btn btn-outline-secondary py-2 px-3" title="Mover para baixo"
                     (click)="moverBloco(i, 'down')" [disabled]="i === layoutAtual.length - 1">
                     <i class="bi bi-arrow-down"></i>
                   </button>
-                  <button class="btn btn-outline-danger" title="Remover bloco"
+                  <button class="btn btn-outline-danger py-2 px-3" title="Remover bloco"
                     (click)="removerBloco(i)">
-                    <i class="bi bi-trash"></i>
+                    <i class="bi bi-trash-fill"></i>
                   </button>
                 </div>
               </div>

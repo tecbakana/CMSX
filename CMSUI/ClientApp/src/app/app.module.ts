@@ -22,10 +22,10 @@ import { GrupoComponent } from './grupo/grupo.component';
 import { VinculoComponent } from './vinculo/vinculo.component';
 import { VinculoModuloComponent } from './vinculo-modulo/vinculo-modulo.component';
 import { PageBuilderComponent } from './page-builder/page-builder.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SiteComponent } from './site/site.component';
 import { LandingComponent } from './landing/landing.component';
 import { PedidoComponent } from './pedido/pedido.component';
-
 @NgModule({
   declarations: [
     AppComponent,
@@ -53,6 +53,7 @@ import { PedidoComponent } from './pedido/pedido.component';
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     HttpClientModule,
     FormsModule,
+    DragDropModule,
     RouterModule.forRoot([
       { path: '', component: LandingComponent, pathMatch: 'full' },
       { path: 'dashboard', component: HomeComponent },
@@ -74,7 +75,10 @@ import { PedidoComponent } from './pedido/pedido.component';
       { path: 'vinculos', component: VinculoComponent },
       { path: 'vinculosmodulo', component: VinculoModuloComponent },
       { path: 'pedidos', component: PedidoComponent },
+      { path: 'loja', loadChildren: () => import('./loja/loja.module').then(m => m.LojaModule) },
+      { path: 's/:slug/loja', loadChildren: () => import('./loja/loja.module').then(m => m.LojaModule) },
       { path: 'page-builder', component: PageBuilderComponent },
+      { path: 'page-builder-v2', loadChildren: () => import('./page-builder-v2/page-builder-v2.module').then(m => m.PageBuilderV2Module) },
       { path: 's/:slug', component: SiteComponent },
       { path: 's/:slug/:area', component: SiteComponent },
       { path: 'preview/:id', component: SiteComponent },

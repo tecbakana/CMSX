@@ -23,6 +23,7 @@ public static class DependencyInjectionExtensions
         services.AddScoped<IProdutoRepositorio, ProdutoRepositorio>();
         services.AddScoped<IRelacaoRepositorio, RelacaoRepositorio>();
         services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+        services.AddScoped<IClienteLojaRepositorio, ClienteLojaRepositorio>();
 
         return services;
     }

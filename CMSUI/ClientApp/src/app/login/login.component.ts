@@ -28,7 +28,7 @@ export class LoginComponent {
       .subscribe({
         next: (user) => {
           sessionStorage.setItem('usuario', JSON.stringify(user));
-          window.location.href = '/';
+          this.router.navigate(['/dashboard']);
         },
         error: () => {
           this.erro = 'Login ou senha inválidos.';
@@ -44,7 +44,7 @@ export class LoginComponent {
       .subscribe({
         next: (user) => {
           sessionStorage.setItem('usuario', JSON.stringify(user));
-          window.location.href = '/';
+          this.router.navigate(['/dashboard']);
         },
         error: () => {
           this.erro = 'Tenant demo não disponível. Execute o script cmsxDB.tenant_demo.sql.';

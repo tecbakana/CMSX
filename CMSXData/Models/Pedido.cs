@@ -12,6 +12,7 @@ public partial class Pedido
     public string? Clienteemail { get; set; }
     public decimal? Valorpedido { get; set; }
     public string? Statusatual { get; set; }
+    public string? MetodoPagamento { get; set; }
     public DateTime? Datainclusao { get; set; }
 
     public virtual ICollection<Statuspedido> Statuspedidos { get; set; } = new List<Statuspedido>();

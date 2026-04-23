@@ -168,6 +168,13 @@ BEGIN
 END
 GO
 
+IF NOT EXISTS (SELECT 1 FROM [dbo].[modulo] WHERE ModuloId = 'MOD-010')
+BEGIN
+    INSERT INTO [dbo].[modulo] (ModuloId, Nome, Url, Posicao)
+    VALUES ('MOD-010', 'Page Builder v2', '/page-builder-v2', 10);
+END
+GO
+
 -- --------------------------------------------------
 -- Verificação
 -- --------------------------------------------------
