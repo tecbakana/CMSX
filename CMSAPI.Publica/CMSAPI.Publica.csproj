@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>CMSAPIPublica</RootNamespace>
+    <UserSecretsId>9c35d1b5-6913-43e5-804f-03df92f2df2d</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CMSXData\CMSXData.csproj" />
+    <ProjectReference Include="..\ICMSX\ICMSX.csproj" />
+    <ProjectReference Include="..\CMSXDAO\CMSXDAO.csproj" />
+    <ProjectReference Include="..\CMSXRepo\CMSXRepo.csproj" />
+  </ItemGroup>
+
+</Project>

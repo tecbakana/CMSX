@@ -1,0 +1,136 @@
+<div class="container-fluid py-3">
+
+  <!-- Cabeçalho -->
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <h4 class="mb-0">Orçamentos</h4>
+    <button class="btn btn-sm btn-outline-secondary ms-auto" title="Copiar link público" (click)="copiarLink()">
+      Copiar link do vendedor
+    </button>
+    <button class="btn btn-sm btn-outline-secondary" (click)="carregar()">&#8635; Atualizar</button>
+  </div>
+
+  <div class="row g-3">
+    <!-- Tabela -->
+    <div [class]="selecionado ? 'col-md-7' : 'col-12'">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>Cliente</th>
+              <th>Vendedor</th>
+              <th class="text-end">Valor Est.</th>
+              <th>Prazo</th>
+              <th class="text-center">Aprovado</th>
+              <th>Data</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of lista"
+                style="cursor:pointer"
+                [class.table-active]="selecionado?.orcamentoid === o.orcamentoid"
+                (click)="selecionar(o)">
+              <td>
+                <div>{{ o.nome }}</div>
+                <small class="text-muted">{{ o.email }}</small>
+              </td>
+              <td>{{ o.nomevendedor || '—' }}</td>
+              <td class="text-end">{{ formatarValor(o.valorestimado) }}</td>
+              <td>{{ o.prazo || '—' }}</td>
+              <td class="text-center">
+                <button class="btn btn-sm"
+                        [class.btn-success]="o.aprovado"
+                        [class.btn-outline-secondary]="!o.aprovado"
+                        (click)="toggleAprovar(o, $event)">
+                  {{ o.aprovado ? 'Sim' : 'Não' }}
+                </button>
+              </td>
+              <td>{{ formatarData(o.datainclusao) }}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-danger"
+                        (click)="excluir(o, $event)">✕</button>
+              </td>
+            </tr>
+            <tr *ngIf="lista.length === 0">
+              <td colspan="7" class="text-center text-muted py-4">Nenhum orçamento encontrado.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Detalhe -->
+    <div class="col-md-5" *ngIf="selecionado">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Detalhe do orçamento</span>
+          <button class="btn btn-sm btn-outline-secondary" (click)="selecionado = null">✕</button>
+        </div>
+        <div class="card-body" *ngIf="!carregandoDetalhe">
+          <dl class="row mb-0">
+            <dt class="col-5">Cliente</dt>
+            <dd class="col-7">{{ selecionado.nome }}</dd>
+
+            <dt class="col-5">E-mail</dt>
+            <dd class="col-7">{{ selecionado.email || '—' }}</dd>
+
+            <dt class="col-5">Telefone</dt>
+            <dd class="col-7">{{ selecionado.telefone || '—' }}</dd>
+
+            <dt class="col-5">Vendedor</dt>
+            <dd class="col-7">{{ selecionado.nomevendedor || '—' }}</dd>
+
+            <dt class="col-5">Descrição</dt>
+            <dd class="col-7">{{ selecionado.descricaoservico || '—' }}</dd>
+
+            <dt class="col-5">Valor estimado</dt>
+            <dd class="col-7">{{ formatarValor(selecionado.valorestimado) }}</dd>
+
+            <dt class="col-5">Prazo</dt>
+            <dd class="col-7">{{ selecionado.prazo || '—' }}</dd>
+
+            <dt class="col-5">Aprovado</dt>
+            <dd class="col-7">
+              <span class="badge" [class.bg-success]="selecionado.aprovado" [class.bg-secondary]="!selecionado.aprovado">
+                {{ selecionado.aprovado ? 'Sim' : 'Não' }}
+              </span>
+            </dd>
+          </dl>
+
+          <!-- Itens -->
+          <hr *ngIf="selecionado.itens?.length > 0">
+          <div *ngIf="selecionado.itens?.length > 0">
+            <strong>Itens</strong>
+            <table class="table table-sm mt-2 mb-0">
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  <th class="text-center">Qtd</th>
+                  <th class="text-end">Valor unit.</th>
+                  <th class="text-center">Ativo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of selecionado.itens"
+                    [class.text-muted]="!item.ativo">
+                  <td>{{ item.descricao }}</td>
+                  <td class="text-center">{{ item.quantidade }}</td>
+                  <td class="text-end">{{ formatarValor(item.valor) }}</td>
+                  <td class="text-center">
+                    <span class="badge" [class.bg-success]="item.ativo" [class.bg-secondary]="!item.ativo">
+                      {{ item.ativo ? 'Sim' : 'Não' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-body text-center text-muted" *ngIf="carregandoDetalhe">
+          Carregando...
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

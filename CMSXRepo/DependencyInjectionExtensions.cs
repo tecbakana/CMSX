@@ -24,6 +24,8 @@ public static class DependencyInjectionExtensions
         services.AddScoped<IRelacaoRepositorio, RelacaoRepositorio>();
         services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
         services.AddScoped<IClienteLojaRepositorio, ClienteLojaRepositorio>();
+        services.AddScoped<IOrcamentoRepositorio, OrcamentoRepositorio>();
+        services.AddScoped<ILojaRepositorio, LojaRepositorio>();
 
         return services;
     }

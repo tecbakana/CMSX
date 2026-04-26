@@ -59,6 +59,7 @@ namespace CMSAPI.Controllers
             public int? Destaque { get; set; }
             public string? Cateriaid { get; set; }
             public string? Aplicacaoid { get; set; }
+            public string? UnidadeVenda { get; set; }
         }
 
         [HttpPost]
@@ -79,6 +80,7 @@ namespace CMSAPI.Controllers
                 Destaque       = dto.Destaque,
                 Cateriaid      = dto.Cateriaid,
                 Aplicacaoid    = acessoTotal ? dto.Aplicacaoid : claimAppId,
+                UnidadeVenda   = dto.UnidadeVenda,
                 Datainicio     = DateTime.Now
             };
             _context.Produtos.Add(item);
@@ -102,6 +104,7 @@ namespace CMSAPI.Controllers
             item.Tipo           = dto.Tipo;
             item.Destaque       = dto.Destaque;
             item.Cateriaid      = dto.Cateriaid;
+            item.UnidadeVenda   = dto.UnidadeVenda;
             _context.SaveChanges();
             return Ok(item);
         }

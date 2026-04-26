@@ -5,6 +5,14 @@ const target = env.CMSAPI_URL || 'http://localhost:5124';
 
 const PROXY_CONFIG = [
   {
+    context: ["/api/publico"],
+    proxyTimeout: 60000,
+    timeout: 60000,
+    target: "https://localhost:13229",
+    secure: false,
+    headers: { Connection: 'Keep-Alive' }
+  },
+  {
     context: [
       "/usuarios",
       "/aplicacaos",
@@ -25,7 +33,9 @@ const PROXY_CONFIG = [
       "/site",
       "/layouttemplates",
       "/pedidos",
+      "/orcamentos",
       "/api/loja",
+      "/publicTokens",
       "/swagger"
     ],
     proxyTimeout: 60000,

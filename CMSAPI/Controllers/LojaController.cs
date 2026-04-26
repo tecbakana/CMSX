@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using CMSAPI.Services;
 using CMSXData.Models;
 using ICMSX;
@@ -13,7 +12,7 @@ namespace CMSAPI.Controllers;
 [AllowAnonymous]
 public class LojaController(
     SalematicHttpService salematic,
-    CmsxDbContext db,
+    ILojaRepositorio lojaRepo,
     IClienteLojaRepositorio clienteLojaRepo,
     PedidoServiceBusPublisher publisher) : ControllerBase
 {
@@ -24,11 +23,15 @@ public class LojaController(
         if (string.IsNullOrEmpty(slug))
             return BadRequest(new { message = "slug é obrigatório." });
 
-        var app = db.Aplicacaos.FirstOrDefault(a => a.Url == slug);
+        var app = lojaRepo.ResolveAplicacao(slug);
         if (app == null)
             return NotFound(new { message = $"Site '{slug}' não encontrado." });
 
-        return Ok(new { aplicacaoid = app.Aplicacaoid.ToString(), nomeLoja = app.Nome });
+        var token = lojaRepo.GetActiveTokenForApp(app.Aplicacaoid.ToString());
+        if (token == null)
+            return NotFound(new { message = "Loja não disponível." });
+
+        return Ok(new { token, nomeLoja = app.Nome });
     }
 
     [HttpGet("catalogo")]
@@ -37,18 +40,15 @@ public class LojaController(
         if (string.IsNullOrEmpty(aplicacaoid))
             return BadRequest(new { message = "aplicacaoid é obrigatório." });
 
-        var produtos = await db.Produtos
-            .Where(p => p.Aplicacaoid == aplicacaoid)
-            .Select(p => new {
-                p.Produtoid,
-                p.Sku,
-                p.Nome,
-                p.Descricacurta,
-                p.Valor
-            })
-            .ToListAsync();
+        var produtos = await lojaRepo.ListaCatalogoAsync(aplicacaoid);
 
-        return Ok(produtos);
+        return Ok(produtos.Select(p => new {
+            p.Produtoid,
+            p.Sku,
+            p.Nome,
+            p.Descricacurta,
+            p.Valor
+        }));
     }
 
     [HttpPost("auth/registrar")]
@@ -93,55 +93,24 @@ public class LojaController(
 
         var pedido = new Pedido
         {
-            Pedidoid        = Guid.NewGuid(),
             Aplicacaoid     = req.Aplicacaoid,
             Numeropedido    = req.Numeropedido,
             Clientenome     = req.Clientenome,
             Clienteemail    = req.Clienteemail,
             Valorpedido     = req.Valorpedido,
-            MetodoPagamento = req.MetodoPagamento,
-            Statusatual     = "pendente",
-            Datainclusao    = DateTime.UtcNow
+            MetodoPagamento = req.MetodoPagamento
         };
 
-        db.Pedidos.Add(pedido);
-        db.Statuspedidos.Add(new Statuspedido
-        {
-            Statuspedidoid = Guid.NewGuid(),
-            Pedidoid       = pedido.Pedidoid,
-            Status         = "pendente",
-            Descricao      = "Pedido recebido.",
-            Datahora       = DateTime.UtcNow
-        });
-        await db.SaveChangesAsync();
+        await lojaRepo.CriaPedidoAsync(pedido);
 
         try
         {
             await publisher.PublicarPedidoAsync(pedido);
-
-            pedido.Statusatual = "criado";
-            db.Statuspedidos.Add(new Statuspedido
-            {
-                Statuspedidoid = Guid.NewGuid(),
-                Pedidoid       = pedido.Pedidoid,
-                Status         = "criado",
-                Descricao      = "Pedido publicado no Service Bus com sucesso.",
-                Datahora       = DateTime.UtcNow
-            });
-            await db.SaveChangesAsync();
+            await lojaRepo.AtualizaStatusPedidoAsync(pedido, "criado", "Pedido publicado no Service Bus com sucesso.");
         }
         catch (Exception)
         {
-            db.Statuspedidos.Add(new Statuspedido
-            {
-                Statuspedidoid = Guid.NewGuid(),
-                Pedidoid       = pedido.Pedidoid,
-                Status         = "erro_envio",
-                Descricao      = "Falha ao publicar no Service Bus. Pedido pendente de reenvio.",
-                Datahora       = DateTime.UtcNow
-            });
-            pedido.Statusatual = "erro_envio";
-            await db.SaveChangesAsync();
+            await lojaRepo.AtualizaStatusPedidoAsync(pedido, "erro_envio", "Falha ao publicar no Service Bus. Pedido pendente de reenvio.");
         }
 
         return Created($"/api/loja/pedidos/{pedido.Pedidoid}/timeline", new
@@ -159,10 +128,7 @@ public class LojaController(
         var clienteEmail = User.FindFirst("email")?.Value
                     ?? User.FindFirst(ClaimTypes.Email)?.Value;
 
-        var pedido = await db.Pedidos
-            .Include(p => p.Statuspedidos)
-            .FirstOrDefaultAsync(p => p.Pedidoid == id);
-
+        var pedido = await lojaRepo.BuscaPedidoComTimelineAsync(id);
         if (pedido is null)
             return NotFound(new { message = "Pedido não encontrado." });
 
@@ -189,12 +155,10 @@ public class LojaController(
         var clienteEmail = User.FindFirst("email")?.Value
                     ?? User.FindFirst(ClaimTypes.Email)?.Value;
 
-        if(string.IsNullOrEmpty(clienteEmail))
+        if (string.IsNullOrEmpty(clienteEmail))
             return Unauthorized(new { message = "Email nao encontrado" });
 
-        var pedidos = db.Pedidos
-            .Where(p => p.Clienteemail == clienteEmail)
-            .OrderByDescending(p => p.Datainclusao)
+        var pedidos = lojaRepo.ListaPedidosPorCliente(clienteEmail)
             .Select(p => new {
                 p.Pedidoid,
                 p.Aplicacaoid,
@@ -204,8 +168,7 @@ public class LojaController(
                 p.Valorpedido,
                 p.Statusatual,
                 p.Datainclusao
-            })
-            .ToArray();
+            });
 
         return Ok(pedidos);
     }

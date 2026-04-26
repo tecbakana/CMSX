@@ -17,6 +17,8 @@ export class AplicacaoComponent implements OnInit {
   ];
 
   minhApp = false; // modo tenant: exibe só a própria app
+  tokens: any[] = [];
+  novoTokenVencimento = '';
 
   constructor(
     private http: HttpClient,
@@ -61,6 +63,30 @@ export class AplicacaoComponent implements OnInit {
     this.selecionado = { ...item, issecure: item.issecure === 1 || item.issecure === true };
     this.abaAtiva = 'geral';
     this.modoEdicao = true;
+    if (item.aplicacaoid) this.carregarTokens(item.aplicacaoid);
+  }
+
+  carregarTokens(aplicacaoid: string) {
+    this.http.get<any[]>(this.baseUrl + `publicTokens?aplicacaoid=${aplicacaoid}`)
+      .subscribe(r => this.tokens = r);
+  }
+
+  gerarToken() {
+    const payload: any = { aplicacaoid: this.selecionado.aplicacaoid };
+    if (this.novoTokenVencimento) payload.datavencimento = this.novoTokenVencimento;
+    this.http.post(this.baseUrl + 'publicTokens', payload)
+      .subscribe(() => { this.novoTokenVencimento = ''; this.carregarTokens(this.selecionado.aplicacaoid); });
+  }
+
+  revogarToken(id: string) {
+    if (confirm('Revogar este token? Links públicos que usam este token deixarão de funcionar.')) {
+      this.http.delete(this.baseUrl + `PublicTokens/${id}`)
+        .subscribe(() => this.carregarTokens(this.selecionado.aplicacaoid));
+    }
+  }
+
+  copiarToken(token: string) {
+    navigator.clipboard.writeText(token);
   }
 
   salvar() {
