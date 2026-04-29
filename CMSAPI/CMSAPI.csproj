@@ -25,7 +25,6 @@
     <ProjectReference Include="..\CMSXDAO\CMSXDAO.csproj" />
     <ProjectReference Include="..\CMSXRepo\CMSXRepo.csproj" />
     <ProjectReference Include="..\ICMSX\ICMSX.csproj" />
-    <ProjectReference Include="..\CMSAPI.Publica\CMSAPI.Publica.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,4 @@
 using CMSAPI.Services;
-using CMSAPIPublica.Controllers;
 using CMSXData.Models;
 using CMSXDAO;
 using CMSXRepo;
@@ -120,7 +119,6 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddHealthChecks();
 
 builder.Services.AddControllers()
-     .AddApplicationPart(typeof(OrcamentoPublicoController).Assembly)
      .AddJsonOptions(o => o.JsonSerializerOptions.PropertyNameCaseInsensitive = true);
 
 var app = builder.Build();
