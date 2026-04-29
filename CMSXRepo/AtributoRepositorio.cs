@@ -18,5 +18,32 @@ namespace CMSXRepo
         public List<Atributo> ListaAtributoXProduto() => throw new NotImplementedException();
         public void CriaAtributo(Atributo at) => throw new NotImplementedException();
         public void InativaAtributo() => throw new NotImplementedException();
+
+        public List<Atributo> ListaAtributosArvore(IEnumerable<string> produtoIds)
+        {
+            var produtoList = produtoIds.ToList();
+            var todos = new List<Atributo>();
+
+            var raizes = _db.Atributos
+                .Where(a => a.Produtoid != null && produtoList.Contains(a.Produtoid))
+                .ToList();
+
+            todos.AddRange(raizes);
+
+            var idsParaBuscar = raizes.Select(a => a.Atributoid).ToList();
+            while (idsParaBuscar.Count > 0)
+            {
+                var filhos = _db.Atributos
+                    .Where(a => a.ParentAtributoId.HasValue && idsParaBuscar.Contains(a.ParentAtributoId.Value))
+                    .ToList();
+
+                if (filhos.Count == 0) break;
+
+                todos.AddRange(filhos);
+                idsParaBuscar = filhos.Select(a => a.Atributoid).ToList();
+            }
+
+            return todos;
+        }
     }
 }

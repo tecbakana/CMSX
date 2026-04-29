@@ -125,6 +125,10 @@
             <label class="form-label">Valor (R$)</label>
             <input type="number" step="0.01" class="form-control" [(ngModel)]="selecionado.valor">
           </div>
+          <div class="col-md-2">
+            <label class="form-label">Unidade de Venda</label>
+            <input class="form-control" [(ngModel)]="selecionado.unidadeVenda" placeholder="Ex: UN, KG, CX">
+          </div>
           <div class="col-md-3">
             <label class="form-label">Categoria</label>
             <select class="form-select" [(ngModel)]="selecionado.cateriaid">
@@ -171,62 +175,134 @@
     <div *ngIf="aba==='atributos'" class="card">
       <div class="card-body">
 
-        <!-- Adicionar atributo -->
-        <div class="row g-2 align-items-end mb-3">
-          <div class="col-md-4">
-            <label class="form-label">Nome do Atributo</label>
-            <input class="form-control form-control-sm" [(ngModel)]="novoAtrib.nome" placeholder="Ex: Cor, Tamanho">
-          </div>
-          <div class="col-md-5">
-            <label class="form-label">Descrição</label>
-            <input class="form-control form-control-sm" [(ngModel)]="novoAtrib.descricao">
-          </div>
-          <div class="col-auto">
-            <button class="btn btn-primary btn-sm" (click)="adicionarAtributo()">+ Atributo</button>
-          </div>
+        <!-- Adicionar atributo raiz -->
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-4">
+          <input class="form-control form-control-sm" style="max-width:200px"
+                 [(ngModel)]="novoAtrib.nome" placeholder="Nome do atributo">
+          <input class="form-control form-control-sm" style="max-width:200px"
+                 [(ngModel)]="novoAtrib.descricao" placeholder="Descrição (opcional)">
+          <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:130px"
+                 [(ngModel)]="novoAtrib.valorAdicional" placeholder="Valor checkbox R$"
+                 title="Quando preenchido, o atributo aparece como checkbox no orçamento">
+          <button class="btn btn-primary btn-sm" (click)="adicionarAtributo()">+ Atributo raiz</button>
         </div>
 
-        <div *ngIf="atributos.length===0" class="text-muted">Nenhum atributo cadastrado.</div>
+        <div *ngIf="atributos.length===0" class="text-muted small">Nenhum atributo cadastrado.</div>
 
-        <!-- Lista de atributos e suas opções -->
-        <div *ngFor="let a of atributos" class="card mb-3 border-secondary">
-          <div class="card-header d-flex justify-content-between align-items-center py-2">
-            <strong>{{a.nome}}</strong> <small class="text-muted">{{a.descricao}}</small>
-            <button class="btn btn-outline-danger btn-sm" (click)="removerAtributo(a.atributoid)">Remover</button>
-          </div>
-          <div class="card-body py-2">
+        <!-- Template recursivo -->
+        <ng-template #atributoNode let-a="a" let-nivel="nivel">
 
-            <!-- Opções existentes -->
-            <div class="d-flex flex-wrap gap-2 mb-2">
-              <span *ngFor="let o of a.opcoes" class="badge bg-secondary d-flex align-items-center gap-1 py-2 px-2">
-                {{o.nome}}
-                <span *ngIf="o.estoque!=null" class="text-warning">(est: {{o.estoque}})</span>
-                <button class="btn-close btn-close-white ms-1" style="font-size:.6rem"
-                  (click)="removerOpcao(a.atributoid, o.opcaoid)"></button>
+          <!-- Linha do nó -->
+          <div class="d-flex align-items-center gap-2 py-2 px-2 rounded"
+               [style.margin-left.px]="nivel * 20"
+               style="cursor:pointer; border-left:3px solid #dee2e6; margin-bottom:2px"
+               [style.border-left-color]="nivel === 0 ? '#0d6efd' : nivel === 1 ? '#6c757d' : '#adb5bd'"
+               (click)="toggleNode(a.atributoid)">
+
+            <span class="text-muted" style="width:12px;font-size:.7rem;flex-shrink:0">
+              {{ isExpanded(a.atributoid) ? '▼' : '▶' }}
+            </span>
+
+            <ng-container *ngIf="editingNode?.id === a.atributoid; else nomeLabel">
+              <input class="form-control form-control-sm py-0" style="width:160px;height:24px;font-size:.85rem"
+                     [(ngModel)]="editingNode!.nome"
+                     (click)="$event.stopPropagation()"
+                     (blur)="salvarNomeAtributo(a)"
+                     (keydown.enter)="salvarNomeAtributo(a)"
+                     (keydown.escape)="cancelEditNome()"
+                     autofocus>
+            </ng-container>
+            <ng-template #nomeLabel>
+              <strong class="small" title="Clique para editar"
+                      (click)="startEditNome(a, $event)">{{ a.nome }}</strong>
+              <small class="text-muted" *ngIf="a.descricao">— {{ a.descricao }}</small>
+            </ng-template>
+
+            <!-- Resumo colapsado -->
+            <ng-container *ngIf="!isExpanded(a.atributoid)">
+              <span *ngIf="a.opcoes?.length" class="badge bg-light text-secondary border ms-1"
+                    style="font-weight:400;font-size:.7rem">
+                {{ a.opcoes.length }} opç.
               </span>
-              <span *ngIf="a.opcoes.length===0" class="text-muted">Sem opções.</span>
+              <span *ngIf="a.filhos?.length" class="badge bg-light text-secondary border ms-1"
+                    style="font-weight:400;font-size:.7rem">
+                {{ a.filhos.length }} filhos
+              </span>
+              <span *ngIf="a.valorAdicional" class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 ms-1"
+                    style="font-weight:400;font-size:.7rem">
+                checkbox +R${{ a.valorAdicional | number:'1.2-2' }}
+              </span>
+            </ng-container>
+
+            <button class="btn btn-link btn-sm text-danger p-0 ms-auto"
+                    style="font-size:.8rem;text-decoration:none"
+                    (click)="$event.stopPropagation(); removerAtributo(a.atributoid)">✕</button>
+          </div>
+
+          <!-- Conteúdo expandido -->
+          <div *ngIf="isExpanded(a.atributoid)"
+               [style.margin-left.px]="nivel * 20 + 20"
+               style="border-left:2px solid #f0f0f0; padding-left:12px; margin-bottom:6px">
+
+            <!-- Opções existentes (somente folhas) -->
+            <div *ngIf="!a.filhos?.length" class="d-flex flex-wrap gap-1 mt-1 mb-2">
+              <span *ngFor="let o of a.opcoes"
+                    class="badge bg-secondary d-inline-flex align-items-center gap-1 py-1 px-2">
+                {{ o.nome }}
+                <span *ngIf="o.valorAdicional" class="opacity-75 ms-1">(+R${{ o.valorAdicional | number:'1.2-2' }})</span>
+                <button class="btn-close btn-close-white ms-1" style="font-size:.5rem"
+                        (click)="removerOpcao(a.atributoid, o.opcaoid)"></button>
+              </span>
+              <span *ngIf="!a.opcoes?.length" class="text-muted small">Sem opções.</span>
             </div>
 
-            <!-- Adicionar opção -->
-            <div class="row g-2 align-items-end">
-              <div class="col-md-4">
-                <input class="form-control form-control-sm" [(ngModel)]="novaOpcao[a.atributoid].nome"
-                  placeholder="Nome da opção (ex: Azul)">
-              </div>
-              <div class="col-md-2">
-                <input type="number" class="form-control form-control-sm"
-                  [(ngModel)]="novaOpcao[a.atributoid].qtd" placeholder="Qtd">
-              </div>
-              <div class="col-md-2">
-                <input type="number" class="form-control form-control-sm"
-                  [(ngModel)]="novaOpcao[a.atributoid].estoque" placeholder="Estoque">
-              </div>
-              <div class="col-auto">
-                <button class="btn btn-outline-primary btn-sm" (click)="adicionarOpcao(a.atributoid)">+ Opção</button>
-              </div>
+            <!-- Filhos recursivos -->
+            <ng-container *ngFor="let filho of a.filhos">
+              <ng-container *ngTemplateOutlet="atributoNode; context: {a: filho, nivel: nivel + 1}"></ng-container>
+            </ng-container>
+
+            <!-- Botões de ação -->
+            <div class="d-flex gap-2 mt-1">
+              <button *ngIf="!a.filhos?.length"
+                      class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:.75rem"
+                      (click)="toggleOpcaoForm(a.atributoid)">
+                {{ showOpcaoForm.has(a.atributoid) ? '— Cancelar' : '+ Opção' }}
+              </button>
+              <button *ngIf="!a.opcoes?.length"
+                      class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:.75rem"
+                      (click)="toggleSubAtribForm(a.atributoid)">
+                {{ showSubAtribForm.has(a.atributoid) ? '— Cancelar' : '+ Sub-atributo' }}
+              </button>
             </div>
+
+            <!-- Form: adicionar opção -->
+            <div *ngIf="showOpcaoForm.has(a.atributoid)"
+                 class="d-flex flex-wrap gap-2 align-items-center mt-2 p-2 bg-light rounded">
+              <input class="form-control form-control-sm" style="width:150px"
+                     [(ngModel)]="novaOpcao[a.atributoid].nome" placeholder="Nome">
+              <input type="number" step="0.01" class="form-control form-control-sm" style="width:100px"
+                     [(ngModel)]="novaOpcao[a.atributoid].valorAdicional" placeholder="+ Valor R$">
+              <button class="btn btn-primary btn-sm py-0"
+                      (click)="adicionarOpcao(a.atributoid)">Adicionar</button>
+            </div>
+
+            <!-- Form: adicionar sub-atributo -->
+            <div *ngIf="showSubAtribForm.has(a.atributoid)"
+                 class="d-flex flex-wrap gap-2 align-items-center mt-2 p-2 bg-light rounded">
+              <input class="form-control form-control-sm" style="width:180px"
+                     [(ngModel)]="novoSubAtrib[a.atributoid].nome" placeholder="Nome do sub-atributo">
+              <button class="btn btn-primary btn-sm py-0"
+                      (click)="adicionarSubAtributo(a.atributoid)">Adicionar</button>
+            </div>
+
           </div>
-        </div>
+
+        </ng-template>
+
+        <!-- Render raiz -->
+        <ng-container *ngFor="let a of atributos">
+          <ng-container *ngTemplateOutlet="atributoNode; context: {a: a, nivel: 0}"></ng-container>
+        </ng-container>
 
       </div>
     </div>

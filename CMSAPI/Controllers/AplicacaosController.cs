@@ -156,7 +156,7 @@ namespace CMSAPI.Controllers
             var (acessoTotal, _) = UserContext();
             if (!acessoTotal) return Forbid();
 
-            var item = _context.Aplicacaos.Find(Guid.TryParse(id, out var ig3) ? ig3 : (Guid?)null);
+            var item = _context.Aplicacaos.Find(id);
             if (item == null) return NotFound();
             item.Isactive  = ativo;
             item.Datafinal = ativo ? null : DateTime.Now;

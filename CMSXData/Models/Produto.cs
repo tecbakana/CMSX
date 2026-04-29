@@ -36,4 +36,6 @@ public partial class Produto
     public string? Produtocol { get; set; }
 
     public int? SalematicProdutoid { get; set; }
+
+    public string? UnidadeVenda { get; set; }
 }

@@ -59,6 +59,7 @@ namespace CMSAPI.Controllers
             public int? Destaque { get; set; }
             public string? Cateriaid { get; set; }
             public string? Aplicacaoid { get; set; }
+            public string? UnidadeVenda { get; set; }
         }
 
         [HttpPost]
@@ -79,6 +80,7 @@ namespace CMSAPI.Controllers
                 Destaque       = dto.Destaque,
                 Cateriaid      = dto.Cateriaid,
                 Aplicacaoid    = acessoTotal ? dto.Aplicacaoid : claimAppId,
+                UnidadeVenda   = dto.UnidadeVenda,
                 Datainicio     = DateTime.Now
             };
             _context.Produtos.Add(item);
@@ -102,6 +104,7 @@ namespace CMSAPI.Controllers
             item.Tipo           = dto.Tipo;
             item.Destaque       = dto.Destaque;
             item.Cateriaid      = dto.Cateriaid;
+            item.UnidadeVenda   = dto.UnidadeVenda;
             _context.SaveChanges();
             return Ok(item);
         }
@@ -120,6 +123,27 @@ namespace CMSAPI.Controllers
 
         // ── Atributos ────────────────────────────────────────────────────────
 
+        private record OpcaoResponse(string Opcaoid, string? Nome, string? Descricao, int Qtd, int? Estoque, decimal? ValorAdicional);
+        private record AtributoResponse(Guid Atributoid, string Nome, string Descricao, int? Ordem, Guid? ParentAtributoId,
+            decimal? ValorAdicional, List<OpcaoResponse> Opcoes, List<AtributoResponse> Filhos);
+
+        private List<AtributoResponse> BuildAtributoTree(
+            List<Atributo> todos,
+            Dictionary<Guid, List<OpcaoResponse>> opcoesPorAtributo,
+            Guid? parentId)
+        {
+            return todos
+                .Where(a => a.ParentAtributoId == parentId)
+                .OrderBy(a => a.Ordem ?? 0)
+                .Select(a =>
+                {
+                    var filhos = BuildAtributoTree(todos, opcoesPorAtributo, a.Atributoid);
+                    var opcoes = filhos.Count == 0 && opcoesPorAtributo.TryGetValue(a.Atributoid, out var ops) ? ops : [];
+                    return new AtributoResponse(a.Atributoid, a.Nome, a.Descricao, a.Ordem, a.ParentAtributoId, a.ValorAdicional, opcoes, filhos);
+                })
+                .ToList();
+        }
+
         [HttpGet("{id}/atributos")]
         public IActionResult GetAtributos(string id)
         {
@@ -128,20 +152,50 @@ namespace CMSAPI.Controllers
             if (produto == null) return NotFound();
             if (!acessoTotal && produto.Aplicacaoid != claimAppId) return Forbid();
 
-            var atribs = _context.Atributos.Where(a => a.Produtoid == id).ToList();
-            return Ok(atribs.Select(a => new
+            var todosAtribs = _context.Atributos
+                .Where(a => a.Produtoid == id || _context.Atributos
+                    .Where(r => r.Produtoid == id)
+                    .Select(r => r.Atributoid)
+                    .Contains(a.ParentAtributoId!.Value))
+                .ToList();
+
+            // coleta todos descendentes iterativamente para cobrir N níveis
+            var idsConhecidos = todosAtribs.Select(a => a.Atributoid).ToHashSet();
+            bool achouMais;
+            do
             {
-                atributoid = a.Atributoid,
-                nome       = a.Nome,
-                descricao  = a.Descricao,
-                opcoes     = _context.Opcaos
-                    .Where(o => o.Atributoid == a.Atributoid)
-                    .Select(o => new { o.Opcaoid, o.Nome, o.Descricao, o.Qtd, o.Estoque })
-                    .ToList()
-            }).ToArray());
+                achouMais = false;
+                var novos = _context.Atributos
+                    .Where(a => a.ParentAtributoId.HasValue && idsConhecidos.Contains(a.ParentAtributoId.Value) && !idsConhecidos.Contains(a.Atributoid))
+                    .ToList();
+                if (novos.Count > 0)
+                {
+                    todosAtribs.AddRange(novos);
+                    foreach (var n in novos) idsConhecidos.Add(n.Atributoid);
+                    achouMais = true;
+                }
+            } while (achouMais);
+
+            var opcoesPorAtributo = _context.Opcaos
+                .Where(o => idsConhecidos.Contains(o.Atributoid))
+                .ToList()
+                .GroupBy(o => o.Atributoid)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(o => new OpcaoResponse(o.Opcaoid, o.Nome, o.Descricao, o.Qtd, o.Estoque, o.ValorAdicional)).ToList()
+                );
+
+            return Ok(BuildAtributoTree(todosAtribs, opcoesPorAtributo, null));
         }
 
-        public class AtributoDto { public string Nome { get; set; } = ""; public string? Descricao { get; set; } }
+        public class AtributoDto
+        {
+            public string Nome { get; set; } = "";
+            public string? Descricao { get; set; }
+            public Guid? ParentAtributoId { get; set; }
+            public int? Ordem { get; set; }
+            public decimal? ValorAdicional { get; set; }
+        }
 
         [HttpPost("{id}/atributos")]
         public IActionResult PostAtributo(string id, [FromBody] AtributoDto dto)
@@ -151,16 +205,51 @@ namespace CMSAPI.Controllers
             if (produto == null) return NotFound();
             if (!acessoTotal && produto.Aplicacaoid != claimAppId) return Forbid();
 
+            if (dto.ParentAtributoId.HasValue)
+            {
+                var parent = _context.Atributos.FirstOrDefault(a => a.Atributoid == dto.ParentAtributoId.Value);
+                if (parent == null) return BadRequest("ParentAtributoId não encontrado.");
+            }
+
             var a = new Atributo
             {
-                Atributoid = Guid.NewGuid(),
-                Produtoid  = id,
-                Nome       = dto.Nome,
-                Descricao  = dto.Descricao ?? ""
+                Atributoid      = Guid.NewGuid(),
+                Produtoid       = dto.ParentAtributoId.HasValue ? null : id,
+                ParentAtributoId = dto.ParentAtributoId,
+                Nome            = dto.Nome,
+                Descricao       = dto.Descricao ?? "",
+                Ordem           = dto.Ordem,
+                ValorAdicional  = dto.ValorAdicional
             };
             _context.Atributos.Add(a);
             _context.SaveChanges();
-            return Ok(a);
+            return Ok(new { a.Atributoid, a.Nome, a.Descricao, a.Ordem, a.ParentAtributoId, a.Produtoid });
+        }
+
+        [HttpPut("{id}/atributos/{atributoid}")]
+        public IActionResult PutAtributo(string id, Guid atributoid, [FromBody] AtributoDto dto)
+        {
+            var (acessoTotal, claimAppId) = UserContext();
+            var produto = _context.Produtos.FirstOrDefault(p => p.Produtoid == id);
+            if (produto == null) return NotFound();
+            if (!acessoTotal && produto.Aplicacaoid != claimAppId) return Forbid();
+
+            var a = _context.Atributos.FirstOrDefault(x => x.Atributoid == atributoid);
+            if (a == null) return NotFound();
+
+            if (dto.ParentAtributoId.HasValue && dto.ParentAtributoId != a.ParentAtributoId)
+            {
+                var parent = _context.Atributos.FirstOrDefault(x => x.Atributoid == dto.ParentAtributoId.Value);
+                if (parent == null) return BadRequest("ParentAtributoId não encontrado.");
+            }
+
+            a.Nome            = dto.Nome;
+            a.Descricao       = dto.Descricao ?? a.Descricao;
+            a.Ordem           = dto.Ordem ?? a.Ordem;
+            a.ParentAtributoId = dto.ParentAtributoId;
+            a.ValorAdicional  = dto.ValorAdicional;
+            _context.SaveChanges();
+            return Ok(new { a.Atributoid, a.Nome, a.Descricao, a.Ordem, a.ParentAtributoId, a.Produtoid });
         }
 
         [HttpDelete("{id}/atributos/{atributoid}")]
@@ -171,11 +260,27 @@ namespace CMSAPI.Controllers
             if (produto == null) return NotFound();
             if (!acessoTotal && produto.Aplicacaoid != claimAppId) return Forbid();
 
-            var a = _context.Atributos.FirstOrDefault(x => x.Atributoid == atributoid && x.Produtoid == id);
+            var a = _context.Atributos.FirstOrDefault(x => x.Atributoid == atributoid);
             if (a == null) return NotFound();
-            var opcoes = _context.Opcaos.Where(o => o.Atributoid == atributoid).ToList();
+
+            // coleta todos os descendentes
+            var todosIds = new List<Guid> { atributoid };
+            var queue = new Queue<Guid>();
+            queue.Enqueue(atributoid);
+            while (queue.Count > 0)
+            {
+                var pid = queue.Dequeue();
+                var filhos = _context.Atributos
+                    .Where(x => x.ParentAtributoId == pid)
+                    .Select(x => x.Atributoid)
+                    .ToList();
+                foreach (var fid in filhos) { todosIds.Add(fid); queue.Enqueue(fid); }
+            }
+
+            var opcoes = _context.Opcaos.Where(o => todosIds.Contains(o.Atributoid)).ToList();
             _context.Opcaos.RemoveRange(opcoes);
-            _context.Atributos.Remove(a);
+            var atribs = _context.Atributos.Where(x => todosIds.Contains(x.Atributoid)).ToList();
+            _context.Atributos.RemoveRange(atribs);
             _context.SaveChanges();
             return Ok();
         }
@@ -188,6 +293,7 @@ namespace CMSAPI.Controllers
             public string? Descricao { get; set; }
             public int Qtd { get; set; }
             public int? Estoque { get; set; }
+            public decimal? ValorAdicional { get; set; }
         }
 
         [HttpPost("{id}/atributos/{atributoid}/opcoes")]
@@ -200,14 +306,35 @@ namespace CMSAPI.Controllers
 
             var o = new Opcao
             {
-                Opcaoid    = Guid.NewGuid().ToString(),
-                Atributoid = atributoid,
-                Nome       = dto.Nome,
-                Descricao  = dto.Descricao,
-                Qtd        = dto.Qtd,
-                Estoque    = dto.Estoque
+                Opcaoid        = Guid.NewGuid().ToString(),
+                Atributoid     = atributoid,
+                Nome           = dto.Nome,
+                Descricao      = dto.Descricao,
+                Qtd            = dto.Qtd,
+                Estoque        = dto.Estoque,
+                ValorAdicional = dto.ValorAdicional
             };
             _context.Opcaos.Add(o);
+            _context.SaveChanges();
+            return Ok(o);
+        }
+
+        [HttpPut("{id}/atributos/{atributoid}/opcoes/{opcaoid}")]
+        public IActionResult PutOpcao(string id, Guid atributoid, string opcaoid, [FromBody] OpcaoDto dto)
+        {
+            var (acessoTotal, claimAppId) = UserContext();
+            var produto = _context.Produtos.FirstOrDefault(p => p.Produtoid == id);
+            if (produto == null) return NotFound();
+            if (!acessoTotal && produto.Aplicacaoid != claimAppId) return Forbid();
+
+            var o = _context.Opcaos.FirstOrDefault(x => x.Opcaoid == opcaoid && x.Atributoid == atributoid);
+            if (o == null) return NotFound();
+
+            o.Nome           = dto.Nome;
+            o.Descricao      = dto.Descricao;
+            o.Qtd            = dto.Qtd;
+            o.Estoque        = dto.Estoque;
+            o.ValorAdicional = dto.ValorAdicional;
             _context.SaveChanges();
             return Ok(o);
         }

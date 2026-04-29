@@ -1,28 +1,35 @@
 using CMSAPI.Services;
+using CMSAPIPublica.Controllers;
 using CMSXData.Models;
 using CMSXDAO;
 using CMSXRepo;
 using ICMSX;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Angular", policy =>
-        policy.WithOrigins("https://localhost:44455", "http://localhost:44455", "https://localhost:7124")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
 
-var connSqlServer = builder.Configuration.GetConnectionString("SqlServer");
-builder.Services.AddDbContext<CmsxDbContext>(o => o.UseSqlServer(connSqlServer));
+var connPostgres = builder.Configuration.GetConnectionString("PostgreSQL");
+builder.Services.AddDbContext<CmsxDbContext>(o => o.UseNpgsql(connPostgres));
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -54,7 +61,7 @@ builder.Services.AddCMSXRepo();
 builder.Services.AddHttpClient();
 
 builder.Services.AddSingleton<IAgentIAFactory, AgentIAFactory>();
-builder.Services.AddHostedService<PedidosServiceBusConsumer>();
+// builder.Services.AddHostedService<PedidosServiceBusConsumer>(); // ServiceBus desabilitado — namespace excluído
 builder.Services.AddScoped<PedidoServiceBusPublisher>(ps =>
 {
     var config = ps.GetRequiredService<IConfiguration>();
@@ -98,13 +105,35 @@ builder.Services.AddHttpClient<SalematicHttpService>(client =>
     client.BaseAddress = new Uri(builder.Configuration["Salematic:BaseUrl"]!);
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("api_publica", o =>
+    {
+        o.PermitLimit = 30;
+        o.Window = TimeSpan.FromMinutes(1);
+        o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        o.QueueLimit = 0;
+    });
+    options.RejectionStatusCode = 429;
+});
+
+builder.Services.AddHealthChecks();
+
 builder.Services.AddControllers()
+     .AddApplicationPart(typeof(OrcamentoPublicoController).Assembly)
      .AddJsonOptions(o => o.JsonSerializerOptions.PropertyNameCaseInsensitive = true);
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<CmsxDbContext>().Database.Migrate();
+}
+
+app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("Angular");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -115,6 +144,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
+app.MapHealthChecks("/health");
 app.MapControllers();
 
 app.Run();

@@ -13,8 +13,13 @@ export class ProdutoComponent implements OnInit {
 
   // Atributos
   atributos: any[] = [];
-  novoAtrib = { nome: '', descricao: '' };
-  novaOpcao: { [atributoid: string]: { nome: string; qtd: number; estoque: number } } = {};
+  novoAtrib = { nome: '', descricao: '', valorAdicional: null as number | null };
+  novaOpcao: { [atributoid: string]: { nome: string; qtd: number; estoque: number; valorAdicional: number | null } } = {};
+  novoSubAtrib: { [atributoid: string]: { nome: string; descricao: string } } = {};
+  expandedNodes = new Set<string>();
+  showOpcaoForm = new Set<string>();
+  showSubAtribForm = new Set<string>();
+  editingNode: { id: string; nome: string } | null = null;
 
   // Galeria
   imagens: any[] = [];
@@ -187,22 +192,67 @@ export class ProdutoComponent implements OnInit {
 
   // ── Atributos ──────────────────────────────────────────────────────
 
+  startEditNome(a: any, event: Event) {
+    event.stopPropagation();
+    this.editingNode = { id: a.atributoid, nome: a.nome };
+  }
+
+  salvarNomeAtributo(a: any) {
+    if (!this.editingNode || this.editingNode.id !== a.atributoid) return;
+    const nome = this.editingNode.nome.trim();
+    if (!nome || nome === a.nome) { this.editingNode = null; return; }
+    this.http.put(
+      this.baseUrl + 'produtos/' + this.selecionado.produtoid + '/atributos/' + a.atributoid,
+      { nome, descricao: a.descricao, ordem: a.ordem, parentAtributoId: a.parentAtributoId }
+    ).subscribe(() => { this.editingNode = null; this.carregarAtributos(); });
+  }
+
+  cancelEditNome() { this.editingNode = null; }
+
+  toggleNode(id: string) {
+    if (this.expandedNodes.has(id)) this.expandedNodes.delete(id);
+    else this.expandedNodes.add(id);
+  }
+
+  isExpanded(id: string) { return this.expandedNodes.has(id); }
+
+  toggleOpcaoForm(id: string) {
+    this.showSubAtribForm.delete(id);
+    if (this.showOpcaoForm.has(id)) this.showOpcaoForm.delete(id);
+    else this.showOpcaoForm.add(id);
+  }
+
+  toggleSubAtribForm(id: string) {
+    this.showOpcaoForm.delete(id);
+    if (this.showSubAtribForm.has(id)) this.showSubAtribForm.delete(id);
+    else this.showSubAtribForm.add(id);
+  }
+
   carregarAtributos() {
     if (!this.selecionado?.produtoid) return;
     this.http.get<any[]>(this.baseUrl + 'produtos/' + this.selecionado.produtoid + '/atributos')
       .subscribe(r => {
         this.atributos = r;
-        r.forEach((a: any) => {
-          if (!this.novaOpcao[a.atributoid])
-            this.novaOpcao[a.atributoid] = { nome: '', qtd: 1, estoque: 0 };
-        });
+        this.initFormularioAtributos(r);
+        r.forEach((a: any) => this.expandedNodes.add(a.atributoid));
       });
+  }
+
+  private initFormularioAtributos(atribs: any[]) {
+    atribs.forEach((a: any) => {
+      if (!this.novaOpcao[a.atributoid])
+        this.novaOpcao[a.atributoid] = { nome: '', qtd: 1, estoque: 0, valorAdicional: null };
+      if (!this.novoSubAtrib[a.atributoid])
+        this.novoSubAtrib[a.atributoid] = { nome: '', descricao: '' };
+      if (a.filhos?.length)
+        this.initFormularioAtributos(a.filhos);
+    });
   }
 
   adicionarAtributo() {
     if (!this.novoAtrib.nome.trim()) return;
     this.http.post(this.baseUrl + 'produtos/' + this.selecionado.produtoid + '/atributos', this.novoAtrib)
-      .subscribe(() => { this.novoAtrib = { nome: '', descricao: '' }; this.carregarAtributos(); });
+      .subscribe(() => { this.novoAtrib = { nome: '', descricao: '', valorAdicional: null }; this.carregarAtributos(); });
   }
 
   removerAtributo(atributoid: string) {
@@ -216,7 +266,26 @@ export class ProdutoComponent implements OnInit {
     if (!o?.nome?.trim()) return;
     this.http.post(
       this.baseUrl + 'produtos/' + this.selecionado.produtoid + '/atributos/' + atributoid + '/opcoes', o)
-      .subscribe(() => { o.nome = ''; o.qtd = 1; o.estoque = 0; this.carregarAtributos(); });
+      .subscribe(() => {
+        o.nome = ''; o.qtd = 1; o.estoque = 0; o.valorAdicional = null;
+        this.showOpcaoForm.delete(atributoid);
+        this.expandedNodes.add(atributoid);
+        this.carregarAtributos();
+      });
+  }
+
+  adicionarSubAtributo(parentId: string) {
+    const s = this.novoSubAtrib[parentId];
+    if (!s?.nome?.trim()) return;
+    this.http.post(
+      this.baseUrl + 'produtos/' + this.selecionado.produtoid + '/atributos',
+      { nome: s.nome, descricao: s.descricao, parentAtributoId: parentId })
+      .subscribe(() => {
+        s.nome = ''; s.descricao = '';
+        this.showSubAtribForm.delete(parentId);
+        this.expandedNodes.add(parentId);
+        this.carregarAtributos();
+      });
   }
 
   removerOpcao(atributoid: string, opcaoid: string) {

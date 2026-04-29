@@ -1,0 +1,229 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: multiplai-ingress
+  namespace: multiplai
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+spec:
+  tls:
+    - hosts:
+        - multiplai.com.br
+        - admin.multiplai.com.br
+        - api.multiplai.com.br
+      secretName: multiplai-tls
+  rules:
+    # -----------------------------------------------
+    # multiplai.com.br — PublicUI + CMSAPI.Publica
+    # -----------------------------------------------
+    - host: multiplai.com.br
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi-publica
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: publicui
+                port:
+                  number: 8080
+
+    # -----------------------------------------------
+    # api.multiplai.com.br — CMSAPI.Publica (integração externa)
+    # -----------------------------------------------
+    - host: api.multiplai.com.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi-publica
+                port:
+                  number: 8080
+
+    # -----------------------------------------------
+    # admin.multiplai.com.br — CMSUI + CMSAPI
+    # Paths de API são roteados para cmsapi;
+    # todo o resto vai para cmsui (Angular SPA).
+    # -----------------------------------------------
+    - host: admin.multiplai.com.br
+      http:
+        paths:
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /usuarios
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /aplicacaos
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /dashboard
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /modulos
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /conteudos
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /areas
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /categorias
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /produtos
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /formularios
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /grupos
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /vinculos
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /vinculosmodulo
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /pagebuilder
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /wiki
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /faq
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /site
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /layouttemplates
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /pedidos
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /orcamentos
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /publicTokens
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /swagger
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsapi
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cmsui
+                port:
+                  number: 8080

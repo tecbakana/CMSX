@@ -1,0 +1,21 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+COPY ["CMSAPI/CMSAPI.csproj",             "CMSAPI/"]
+COPY ["CMSAPI.Publica/CMSAPI.Publica.csproj", "CMSAPI.Publica/"]
+COPY ["CMSXData/CMSXData.csproj",          "CMSXData/"]
+COPY ["CMSXRepo/CMSXRepo.csproj",          "CMSXRepo/"]
+COPY ["ICMSX/ICMSX.csproj",               "ICMSX/"]
+COPY ["CMSXDAO/CMSXDAO.csproj",           "CMSXDAO/"]
+
+RUN dotnet restore "CMSAPI/CMSAPI.csproj"
+
+COPY . .
+RUN dotnet publish "CMSAPI/CMSAPI.csproj" -c Release -o /app/publish --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/publish .
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+ENTRYPOINT ["dotnet", "CMSAPI.dll"]

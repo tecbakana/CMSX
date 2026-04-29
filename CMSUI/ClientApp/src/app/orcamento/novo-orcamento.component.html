@@ -1,0 +1,230 @@
+<div class="container py-4" style="max-width:700px">
+
+  <!-- Sucesso -->
+  <div *ngIf="sucesso" class="text-center py-5">
+    <div style="font-size:3rem">&#10003;</div>
+    <h4 class="mt-3">Orçamento salvo com sucesso!</h4>
+    <p class="text-muted">Você pode tirar um print desta tela ou criar um novo orçamento.</p>
+    <button class="btn btn-outline-primary mt-2" (click)="novoOrcamento()">Novo orçamento</button>
+  </div>
+
+  <!-- Erro de link inválido -->
+  <div *ngIf="!sucesso && !token" class="alert alert-danger">
+    Link inválido. Solicite um novo link ao administrador.
+  </div>
+
+  <!-- Formulário -->
+  <div *ngIf="!sucesso && token">
+    <h4 class="mb-4">Novo Orçamento</h4>
+
+    <div class="alert alert-danger" *ngIf="erro">{{ erro }}</div>
+
+    <fieldset [disabled]="enviando">
+
+      <h6 class="text-muted mb-3">Dados do cliente</h6>
+
+      <div class="mb-3">
+        <label class="form-label">Nome <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" [(ngModel)]="form.nome" placeholder="Nome completo do cliente">
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label">E-mail</label>
+          <input type="email" class="form-control" [(ngModel)]="form.email" placeholder="email@exemplo.com">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Telefone</label>
+          <input type="text" class="form-control" [(ngModel)]="form.telefone" placeholder="(00) 00000-0000">
+        </div>
+      </div>
+
+      <hr>
+      <h6 class="text-muted mb-3">Orçamento</h6>
+
+      <div class="mb-3">
+        <label class="form-label">Descrição do serviço</label>
+        <textarea class="form-control" rows="3" [(ngModel)]="form.descricaoservico"
+                  placeholder="Descreva o serviço ou produto orçado..."></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Prazo</label>
+        <input type="text" class="form-control" [(ngModel)]="form.prazo"
+               placeholder="Ex: 5 dias úteis, 30/05/2025">
+      </div>
+
+      <!-- Itens -->
+      <hr>
+      <h6 class="text-muted mb-3">Itens do orçamento</h6>
+
+      <!-- Seletor de produto -->
+      <div class="card mb-3">
+        <div class="card-body">
+
+          <div class="mb-3">
+            <label class="form-label form-label-sm fw-semibold">Produto</label>
+            <select class="form-select form-select-sm"
+                    [(ngModel)]="produtoSelecionadoId"
+                    (ngModelChange)="onProdutoChange()">
+              <option value="">Selecione um produto...</option>
+              <option *ngFor="let p of produtos" [value]="p.produtoid">{{ p.nome }}</option>
+            </select>
+            <div *ngIf="produtos.length === 0" class="text-muted small mt-1">
+              Nenhum produto cadastrado para este tenant.
+            </div>
+          </div>
+
+          <ng-container *ngIf="produtoSelecionado">
+
+            <!-- Seletores de atributos (cascata) -->
+            <div *ngIf="slots.length > 0" class="mb-3">
+              <div *ngFor="let slot of slots" class="mb-2">
+                <label class="form-label form-label-sm">{{ slot.label }}</label>
+
+                <!-- Selector de navegação: escolhe qual galho seguir -->
+                <select *ngIf="slot.isFilhoSelector"
+                        class="form-select form-select-sm"
+                        [(ngModel)]="slot.filhoSelecionadoId"
+                        (ngModelChange)="onSlotChange(slot)">
+                  <option value="">Selecione...</option>
+                  <option *ngFor="let filho of slot.filhos" [value]="filho.atributoid">{{ filho.nome }}</option>
+                </select>
+
+                <!-- Checkbox de atributo com valor próprio -->
+                <div *ngIf="!slot.isFilhoSelector && slot.isCheckbox" class="form-check mt-1">
+                  <input type="checkbox" class="form-check-input"
+                         [id]="'chk-' + slot.atributoid"
+                         [(ngModel)]="slot.checked"
+                         (ngModelChange)="onSlotChange(slot)">
+                  <label class="form-check-label small" [for]="'chk-' + slot.atributoid">
+                    incluir <span class="text-muted">(+{{ slot.valorAdicional | currency:'BRL':'symbol':'1.2-2' }})</span>
+                  </label>
+                </div>
+
+                <!-- Selector de opção com valor -->
+                <select *ngIf="!slot.isFilhoSelector && !slot.isCheckbox"
+                        class="form-select form-select-sm"
+                        [(ngModel)]="slot.opcaoSelecionada"
+                        (ngModelChange)="onSlotChange(slot)">
+                  <option value="">Selecione...</option>
+                  <option *ngFor="let opcao of slot.opcoes" [value]="opcao.opcaoid">
+                    {{ opcao.nome }}{{ opcao.valorAdicional > 0 ? ' (+' + (opcao.valorAdicional | currency:'BRL':'symbol':'1.2-2') + ')' : '' }}
+                  </option>
+                </select>
+
+              </div>
+              <div *ngIf="erroSelecao" class="text-danger small mt-1">{{ erroSelecao }}</div>
+            </div>
+
+            <!-- Resumo de valor -->
+            <div class="d-flex gap-3 mb-3 small text-muted">
+              <span *ngIf="produtoSelecionado!.unidadeVenda">
+                Unidade: <strong>{{ produtoSelecionado!.unidadeVenda }}</strong>
+              </span>
+              <span>
+                Valor base: <strong>{{ produtoSelecionado!.valor | currency:'BRL':'symbol':'1.2-2' }}</strong>
+              </span>
+            </div>
+
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="adicionarItem()">
+              + Adicionar item
+            </button>
+
+          </ng-container>
+
+        </div>
+      </div>
+
+      <!-- Lista de itens -->
+      <div *ngIf="itensCompostos.length === 0 && itens.length === 0" class="text-muted small mb-3">
+        Nenhum item adicionado.
+      </div>
+
+      <div class="table-responsive mb-3" *ngIf="itensCompostos.length > 0 || itens.length > 0">
+        <table class="table table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Produto / Opções</th>
+              <th style="width:90px">Qtd</th>
+              <th style="width:110px">Vlr Unit.</th>
+              <th style="width:110px">Total</th>
+              <th style="width:40px"></th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <tr *ngFor="let item of itensCompostos; let i = index">
+              <td>
+                <div class="small fw-semibold">{{ item.produtoNome }}</div>
+                <div class="text-muted" style="font-size:0.75rem">
+                  <ng-container *ngFor="let s of item.selecoes; let last = last">
+                    {{ s.atributoNome }}: {{ s.opcaoNome }}<span *ngIf="!last || item.checkboxes?.length"> | </span>
+                  </ng-container>
+                  <ng-container *ngFor="let c of item.checkboxes; let last = last">
+                    {{ c.atributoNome }}<span *ngIf="!last"> | </span>
+                  </ng-container>
+                </div>
+              </td>
+              <td>
+                <input type="number" class="form-control form-control-sm"
+                       [(ngModel)]="item.quantidade"
+                       (ngModelChange)="onQuantidadeCompostoChange(item)"
+                       min="0.01" step="0.01">
+              </td>
+              <td class="text-muted small">
+                {{ item.valorUnitario | currency:'BRL':'symbol':'1.2-2' }}
+              </td>
+              <td class="fw-semibold small">
+                {{ item.valorUnitario * item.quantidade | currency:'BRL':'symbol':'1.2-2' }}
+              </td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeItemComposto(i)">&#x2715;</button>
+              </td>
+            </tr>
+
+            <tr *ngFor="let item of itens; let i = index">
+              <td class="small">{{ item.descricao }}</td>
+              <td>
+                <input type="number" class="form-control form-control-sm"
+                       [(ngModel)]="item.quantidade"
+                       (ngModelChange)="atualizarTotal()"
+                       min="0.01" step="0.01">
+              </td>
+              <td class="text-muted small">{{ item.valor | currency:'BRL':'symbol':'1.2-2' }}</td>
+              <td class="fw-semibold small">{{ calcularValorLinha(item) | currency:'BRL':'symbol':'1.2-2' }}</td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        (click)="itens.splice(i, 1); atualizarTotal()">&#x2715;</button>
+              </td>
+            </tr>
+
+          </tbody>
+          <tfoot>
+            <tr class="table-light">
+              <td colspan="3" class="text-end fw-semibold">Valor estimado:</td>
+              <td class="fw-semibold">{{ form.valorestimado | currency:'BRL':'symbol':'1.2-2' }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <hr>
+      <h6 class="text-muted mb-3">Vendedor</h6>
+
+      <div class="mb-4">
+        <label class="form-label">Nome do vendedor</label>
+        <input type="text" class="form-control" [(ngModel)]="form.nomevendedor" placeholder="Seu nome">
+      </div>
+
+      <div class="d-grid">
+        <button type="button" class="btn btn-primary btn-lg" (click)="salvar()" [disabled]="enviando">
+          {{ enviando ? 'Salvando...' : 'Salvar orçamento' }}
+        </button>
+      </div>
+
+    </fieldset>
+  </div>
+
+</div>

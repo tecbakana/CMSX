@@ -26,6 +26,8 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SiteComponent } from './site/site.component';
 import { LandingComponent } from './landing/landing.component';
 import { PedidoComponent } from './pedido/pedido.component';
+import { OrcamentoComponent } from './orcamento/orcamento.component';
+import { NovoOrcamentoComponent } from './orcamento/novo-orcamento.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -47,7 +49,9 @@ import { PedidoComponent } from './pedido/pedido.component';
     PageBuilderComponent,
     SiteComponent,
     LandingComponent,
-    PedidoComponent
+    PedidoComponent,
+    OrcamentoComponent,
+    NovoOrcamentoComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
@@ -75,6 +79,8 @@ import { PedidoComponent } from './pedido/pedido.component';
       { path: 'vinculos', component: VinculoComponent },
       { path: 'vinculosmodulo', component: VinculoModuloComponent },
       { path: 'pedidos', component: PedidoComponent },
+      { path: 'orcamentos', component: OrcamentoComponent },
+      { path: 'orcamento/novo', component: NovoOrcamentoComponent },
       { path: 'loja', loadChildren: () => import('./loja/loja.module').then(m => m.LojaModule) },
       { path: 's/:slug/loja', loadChildren: () => import('./loja/loja.module').then(m => m.LojaModule) },
       { path: 'page-builder', component: PageBuilderComponent },

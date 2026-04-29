@@ -1,0 +1,28 @@
+# Stage 1 — Build Angular
+FROM node:20-alpine AS node-build
+WORKDIR /app
+COPY CMSUI/ClientApp/package*.json ./
+RUN npm ci --legacy-peer-deps
+COPY CMSUI/ClientApp/ ./
+RUN npm run build -- --configuration production
+
+# Stage 2 — Build .NET (sem npm, Angular já está pronto)
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet-build
+WORKDIR /src
+
+COPY ["CMSUI/CMSUI.csproj",       "CMSUI/"]
+COPY ["CMSXData/CMSXData.csproj", "CMSXData/"]
+
+RUN dotnet restore "CMSUI/CMSUI.csproj"
+
+COPY . .
+RUN dotnet publish "CMSUI/CMSUI.csproj" -c Release -o /app/publish --no-restore -p:NpmBuild=false
+
+# Stage 3 — Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+COPY --from=dotnet-build /app/publish .
+COPY --from=node-build /app/dist ./wwwroot
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+ENTRYPOINT ["dotnet", "CMSUI.dll"]

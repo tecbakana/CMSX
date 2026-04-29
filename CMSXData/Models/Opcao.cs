@@ -16,4 +16,6 @@ public partial class Opcao
     public string? Descricao { get; set; }
 
     public int? Estoque { get; set; }
+
+    public decimal? ValorAdicional { get; set; }
 }

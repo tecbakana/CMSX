@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cmsapi-publica
+  namespace: multiplai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cmsapi-publica
+  template:
+    metadata:
+      labels:
+        app: cmsapi-publica
+    spec:
+      imagePullSecrets:
+        - name: ocir-pull-secret
+      containers:
+        - name: cmsapi-publica
+          image: gru.ocir.io/grvzruvkeyil/multiplai/cmsapi-publica:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: ConnectionStrings__PostgreSQL
+              valueFrom:
+                secretKeyRef:
+                  name: multiplai-secrets
+                  key: POSTGRES_PUBLICA
+            - name: SalematicJwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: multiplai-secrets
+                  key: SALEMATIC_JWT_KEY
+            - name: Cors__AllowedOrigins__0
+              value: "https://multiplai.com.br"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cmsapi-publica
+  namespace: multiplai
+spec:
+  selector:
+    app: cmsapi-publica
+  ports:
+    - port: 8080
+      targetPort: 8080

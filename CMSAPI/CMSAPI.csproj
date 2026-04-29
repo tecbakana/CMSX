@@ -11,7 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.4" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.11">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -25,6 +25,7 @@
     <ProjectReference Include="..\CMSXDAO\CMSXDAO.csproj" />
     <ProjectReference Include="..\CMSXRepo\CMSXRepo.csproj" />
     <ProjectReference Include="..\ICMSX\ICMSX.csproj" />
+    <ProjectReference Include="..\CMSAPI.Publica\CMSAPI.Publica.csproj" />
   </ItemGroup>
 
 </Project>

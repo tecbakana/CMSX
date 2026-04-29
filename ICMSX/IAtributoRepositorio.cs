@@ -9,5 +9,10 @@ namespace ICMSX
         List<Atributo> ListaAtributoXProduto();
         void CriaAtributo(Atributo at);
         void InativaAtributo();
+
+        /// <summary>
+        /// Retorna todos os atributos (raízes + descendentes) para os produtos informados, lista plana.
+        /// </summary>
+        List<Atributo> ListaAtributosArvore(IEnumerable<string> produtoIds);
     }
 }

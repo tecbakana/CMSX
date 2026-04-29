@@ -61,6 +61,13 @@ public partial class CmsxDbContext : DbContext
     public virtual DbSet<Usuario> Usuarios { get; set; }
     public virtual DbSet<Pedido> Pedidos { get; set; }
     public virtual DbSet<Statuspedido> Statuspedidos { get; set; }
+    public virtual DbSet<OrcamentoCabecalho> OrcamentoCabecalhos { get; set; }
+    public virtual DbSet<OrcamentoDetalhe> OrcamentoDetalhes { get; set; }
+    public virtual DbSet<OrcamentoDetalheComposto> OrcamentoDetalheCompostos { get; set; }
+    public virtual DbSet<Selecao> Selecaos { get; set; }
+    public virtual DbSet<ModeloComposto> ModeloCompostos { get; set; }
+    public virtual DbSet<ModeloSelecao> ModeloSelecaos { get; set; }
+    public virtual DbSet<PublicToken> PublicTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -182,6 +189,17 @@ public partial class CmsxDbContext : DbContext
             entity.Property(e => e.Descricao).HasMaxLength(45).HasColumnName("Descricao");
             entity.Property(e => e.Nome).HasMaxLength(45).HasColumnName("Nome");
             entity.Property(e => e.Produtoid).HasMaxLength(64).HasColumnName("ProdutoId");
+            entity.Property(e => e.ParentAtributoId).HasColumnName("ParentAtributoId");
+            entity.Property(e => e.Ordem).HasColumnName("Ordem");
+            entity.HasOne(e => e.Parent)
+                .WithMany(e => e.Filhos)
+                .HasForeignKey(e => e.ParentAtributoId)
+                .HasConstraintName("FK_Atributo_Parent")
+                .IsRequired(false);
+            entity.HasMany(e => e.Opcoes)
+                .WithOne()
+                .HasForeignKey(o => o.Atributoid)
+                .HasConstraintName("FK_Opcao_Atributo");
         });
 
         modelBuilder.Entity<Cambio>(entity =>
@@ -402,6 +420,7 @@ public partial class CmsxDbContext : DbContext
             entity.Property(e => e.Estoque).HasColumnName("Estoque");
             entity.Property(e => e.Nome).HasMaxLength(500).HasColumnName("Nome");
             entity.Property(e => e.Qtd).HasColumnName("Qtd");
+            entity.Property(e => e.ValorAdicional).HasPrecision(18, 2).HasColumnName("ValorAdicional");
         });
 
         modelBuilder.Entity<Produto>(entity =>
@@ -422,6 +441,7 @@ public partial class CmsxDbContext : DbContext
             entity.Property(e => e.Pagsegurokey).HasMaxLength(800).HasColumnName("PagSeguroKey");
             entity.Property(e => e.Produtocol).HasMaxLength(45).HasColumnName("produtocol");
             entity.Property(e => e.Tipo).HasColumnName("Tipo");
+            entity.Property(e => e.UnidadeVenda).HasMaxLength(45).HasColumnName("UnidadeVenda");
             entity.Property(e => e.Valor).HasPrecision(18, 2).HasColumnName("Valor");
         });
 
@@ -592,10 +612,10 @@ public partial class CmsxDbContext : DbContext
             entity.Property(e => e.Numeropedido).HasMaxLength(100).HasColumnName("numeropedido");
             entity.Property(e => e.Clientenome).HasMaxLength(200).HasColumnName("clientenome");
             entity.Property(e => e.Clienteemail).HasMaxLength(200).HasColumnName("clienteemail");
-            entity.Property(e => e.Valorpedido).HasColumnType("decimal(12,2)").HasColumnName("valorpedido");
+            entity.Property(e => e.Valorpedido).HasPrecision(12, 2).HasColumnName("valorpedido");
             entity.Property(e => e.Statusatual).HasMaxLength(50).HasColumnName("statusatual");
             entity.Property(e => e.MetodoPagamento).HasMaxLength(50).HasColumnName("metodopagamento");
-            entity.Property(e => e.Datainclusao).HasDefaultValueSql("GETUTCDATE()").HasColumnType("datetime2").HasColumnName("datainclusao");
+            entity.Property(e => e.Datainclusao).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("datainclusao");
         });
 
         modelBuilder.Entity<Statuspedido>(entity =>
@@ -606,11 +626,138 @@ public partial class CmsxDbContext : DbContext
             entity.Property(e => e.Pedidoid).HasColumnName("pedidoid");
             entity.Property(e => e.Status).HasMaxLength(50).HasColumnName("status");
             entity.Property(e => e.Descricao).HasMaxLength(500).HasColumnName("descricao");
-            entity.Property(e => e.Datahora).HasDefaultValueSql("GETUTCDATE()").HasColumnType("datetime2").HasColumnName("datahora");
+            entity.Property(e => e.Datahora).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("datahora");
             entity.HasOne(e => e.PedidoNavigation)
                 .WithMany(p => p.Statuspedidos)
                 .HasForeignKey(e => e.Pedidoid)
                 .HasConstraintName("statuspedido_pedidoid_fk");
+        });
+
+        modelBuilder.Entity<OrcamentoCabecalho>(entity =>
+        {
+            entity.HasKey(e => e.Orcamentoid).HasName("PK_orcamentocabecalho");
+            entity.ToTable("orcamentocabecalho");
+            entity.Property(e => e.Orcamentoid).HasDefaultValueSql("NEWID()").HasColumnName("orcamentoid");
+            entity.Property(e => e.Aplicacaoid).HasMaxLength(64).HasColumnName("aplicacaoid");
+            entity.Property(e => e.Nome).HasMaxLength(200).HasColumnName("nome");
+            entity.Property(e => e.Email).HasMaxLength(200).HasColumnName("email");
+            entity.Property(e => e.Telefone).HasMaxLength(50).HasColumnName("telefone");
+            entity.Property(e => e.Descricaoservico).HasColumnName("descricaoservico");
+            entity.Property(e => e.Valorestimado).HasPrecision(12, 2).HasColumnName("valorestimado");
+            entity.Property(e => e.Prazo).HasMaxLength(200).HasColumnName("prazo");
+            entity.Property(e => e.Nomevendedor).HasMaxLength(200).HasColumnName("nomevendedor");
+            entity.Property(e => e.Aprovado).HasColumnName("aprovado");
+            entity.Property(e => e.Datainclusao).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("datainclusao");
+        });
+
+        modelBuilder.Entity<OrcamentoDetalhe>(entity =>
+        {
+            entity.HasKey(e => e.Orcamentodetalheid).HasName("PK_orcamentodetalhe");
+            entity.ToTable("orcamentodetalhe");
+            entity.Property(e => e.Orcamentodetalheid).HasDefaultValueSql("NEWID()").HasColumnName("orcamentodetalheid");
+            entity.Property(e => e.Orcamentoid).HasColumnName("orcamentoid");
+            entity.Property(e => e.Descricao).HasMaxLength(500).HasColumnName("descricao");
+            entity.Property(e => e.Quantidade).HasPrecision(10, 2).HasColumnName("quantidade");
+            entity.Property(e => e.Valor).HasPrecision(12, 2).HasColumnName("valor");
+            entity.Property(e => e.Ativo).HasColumnName("ativo");
+            entity.HasOne(e => e.OrcamentoCabecalhoNavigation)
+                .WithMany(p => p.OrcamentoDetalhes)
+                .HasForeignKey(e => e.Orcamentoid)
+                .HasConstraintName("FK_orcamentodetalhe_orcamentoid");
+        });
+
+        modelBuilder.Entity<PublicToken>(entity =>
+        {
+            entity.HasKey(e => e.PublicTokenId).HasName("PK_publictoken");
+            entity.ToTable("publictoken");
+            entity.HasIndex(e => e.Token).IsUnique().HasDatabaseName("UQ_publictoken_token");
+            entity.HasIndex(e => e.Aplicacaoid).HasDatabaseName("IX_publictoken_aplicacaoid");
+            entity.Property(e => e.PublicTokenId).HasDefaultValueSql("NEWID()").HasColumnName("publictokenid");
+            entity.Property(e => e.Token).HasMaxLength(100).HasColumnName("token");
+            entity.Property(e => e.Aplicacaoid).HasMaxLength(64).HasColumnName("aplicacaoid");
+            entity.Property(e => e.Ativo).HasColumnName("ativo");
+            entity.Property(e => e.Datainclusao).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("datainclusao");
+            entity.Property(e => e.Datavencimento).HasColumnType("timestamp with time zone").HasColumnName("datavencimento");
+        });
+
+        modelBuilder.Entity<OrcamentoDetalheComposto>(entity =>
+        {
+            entity.HasKey(e => e.OrcamentoDetalheCompostoId).HasName("PK_orcamentodetalhecomposto");
+            entity.ToTable("orcamentodetalhecomposto");
+            entity.Property(e => e.OrcamentoDetalheCompostoId).HasDefaultValueSql("NEWID()").HasColumnName("OrcamentoDetalheCompostoId");
+            entity.Property(e => e.Orcamentoid).HasColumnName("orcamentoid");
+            entity.Property(e => e.Produtoid).HasMaxLength(64).HasColumnName("Produtoid");
+            entity.Property(e => e.Quantidade).HasPrecision(10, 2).HasColumnName("Quantidade");
+            entity.Property(e => e.ValorBase).HasPrecision(18, 2).HasColumnName("ValorBase");
+            entity.Property(e => e.ValorTotal).HasPrecision(18, 2).HasColumnName("ValorTotal");
+            entity.Property(e => e.ConfiguracaoJson).HasColumnName("ConfiguracaoJson");
+            entity.Property(e => e.Versao).HasDefaultValue(1).HasColumnName("Versao");
+            entity.Property(e => e.Atual).HasDefaultValue(true).HasColumnName("Atual");
+            entity.Property(e => e.Datainclusao).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("Datainclusao");
+            entity.HasOne(e => e.Cabecalho)
+                .WithMany(c => c.OrcamentoDetalheCompostos)
+                .HasForeignKey(e => e.Orcamentoid)
+                .HasConstraintName("FK_OrcDetalheComposto_Cabecalho");
+            // Produto tem PK composta (Produtoid, Sku) — necessário especificar a chave principal alternativa
+            entity.HasOne(e => e.Produto)
+                .WithMany()
+                .HasForeignKey(e => e.Produtoid)
+                .HasPrincipalKey(p => p.Produtoid)
+                .HasConstraintName("FK_OrcDetalheComposto_Produto");
+        });
+
+        modelBuilder.Entity<Selecao>(entity =>
+        {
+            entity.HasKey(e => e.SelecaoId).HasName("PK_selecao");
+            entity.ToTable("selecao");
+            entity.Property(e => e.SelecaoId).HasDefaultValueSql("NEWID()").HasColumnName("SelecaoId");
+            entity.Property(e => e.OrcamentoDetalheCompostoId).HasColumnName("OrcamentoDetalheCompostoId");
+            entity.Property(e => e.Atributoid).HasColumnName("Atributoid");
+            entity.Property(e => e.Opcaoid).HasMaxLength(64).HasColumnName("Opcaoid");
+            entity.Property(e => e.ValorAdicional).HasPrecision(18, 2).HasDefaultValue(0m).HasColumnName("ValorAdicional");
+            entity.HasOne(e => e.Detalhe)
+                .WithMany(d => d.Selecoes)
+                .HasForeignKey(e => e.OrcamentoDetalheCompostoId)
+                .HasConstraintName("FK_Selecao_Detalhe");
+            entity.HasOne(e => e.Atributo)
+                .WithMany()
+                .HasForeignKey(e => e.Atributoid)
+                .HasConstraintName("FK_Selecao_Atributo");
+            entity.HasOne(e => e.Opcao)
+                .WithMany()
+                .HasForeignKey(e => e.Opcaoid)
+                .HasConstraintName("FK_Selecao_Opcao");
+        });
+
+        modelBuilder.Entity<ModeloComposto>(entity =>
+        {
+            entity.HasKey(e => e.ModeloCompostoId).HasName("PK_modelocomposto");
+            entity.ToTable("modelocomposto");
+            entity.HasIndex(e => new { e.ConfiguracaoHash, e.Aplicacaoid, e.Produtoid })
+                .IsUnique()
+                .HasDatabaseName("IX_modelocomposto_hash");
+            entity.Property(e => e.ModeloCompostoId).HasDefaultValueSql("NEWID()").HasColumnName("ModeloCompostoId");
+            entity.Property(e => e.Aplicacaoid).HasMaxLength(64).HasColumnName("Aplicacaoid");
+            entity.Property(e => e.Produtoid).HasMaxLength(64).HasColumnName("Produtoid");
+            entity.Property(e => e.Nome).HasMaxLength(500).HasColumnName("Nome");
+            entity.Property(e => e.ValorUnitario).HasPrecision(18, 2).HasColumnName("ValorUnitario");
+            entity.Property(e => e.ConfiguracaoHash).HasMaxLength(64).HasColumnName("ConfiguracaoHash");
+            entity.Property(e => e.Usos).HasDefaultValue(1).HasColumnName("Usos");
+            entity.Property(e => e.Datacriacao).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("Datacriacao");
+        });
+
+        modelBuilder.Entity<ModeloSelecao>(entity =>
+        {
+            entity.HasKey(e => e.ModeloSelecaoId).HasName("PK_modeloselecao");
+            entity.ToTable("modeloselecao");
+            entity.Property(e => e.ModeloSelecaoId).HasDefaultValueSql("NEWID()").HasColumnName("ModeloSelecaoId");
+            entity.Property(e => e.ModeloCompostoId).HasColumnName("ModeloCompostoId");
+            entity.Property(e => e.Atributoid).HasColumnName("Atributoid");
+            entity.Property(e => e.Opcaoid).HasMaxLength(64).HasColumnName("Opcaoid");
+            entity.HasOne(e => e.Modelo)
+                .WithMany(m => m.Selecoes)
+                .HasForeignKey(e => e.ModeloCompostoId)
+                .HasConstraintName("FK_ModeloSelecao_Modelo");
         });
 
         OnModelCreatingPartial(modelBuilder);
