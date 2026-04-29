@@ -1,7 +1,6 @@
 using Azure.Messaging.ServiceBus;
 using CMSXData.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 using System.Text.Json;
 using ICMSX;
 
@@ -25,7 +24,7 @@ namespace CMSAPI.Services
             var topico = _config["ServiceBus:TopicoPedidos"] ?? "top-pedidos";
             if (string.IsNullOrWhiteSpace(connStr))
             {
-                _logger.LogWarning("ServiceBus:ConnectionString não configurada — publisher desabilitado.");
+                _logger.LogWarning("ServiceBus:ConnectionString nï¿½o configurada ï¿½ publisher desabilitado.");
                 return;
             }
             _client = new ServiceBusClient(connStr);
@@ -36,7 +35,7 @@ namespace CMSAPI.Services
         {
             if (_sender == null)
             {
-                _logger.LogWarning("Publisher de pedidos não configurado — evento não publicado.");
+                _logger.LogWarning("Publisher de pedidos nï¿½o configurado ï¿½ evento nï¿½o publicado.");
                 return;
             }
             var mensagem = new
