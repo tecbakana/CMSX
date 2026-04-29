@@ -48,7 +48,7 @@ jobs:
         run: |
           echo "${{ secrets.OCI_AUTH_TOKEN }}" | \
           docker login $OCIR_REGION \
-            -u "$OCIR_NAMESPACE/${{ secrets.OCI_USERNAME }}" \
+            -u "${{ secrets.OCI_USERNAME }}" \
             --password-stdin
 
       # ── Build & Push ───────────────────────────────────────────────────
