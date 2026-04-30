@@ -126,7 +126,7 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<CmsxDbContext>().Database.Migrate();
+    scope.ServiceProvider.GetRequiredService<CmsxDbContext>().Database.EnsureCreated();
 }
 
 app.UseStaticFiles();
