@@ -40,6 +40,8 @@ spec:
                   key: SALEMATIC_JWT_KEY
             - name: Cors__AllowedOrigins__0
               value: "https://admin.multiplai.com.br"
+            - name: SwaggerServer__Url
+              value: "https://admin.multiplai.com.br"
           resources:
             requests:
               memory: "256Mi"

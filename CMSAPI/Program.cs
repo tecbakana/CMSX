@@ -33,7 +33,8 @@ builder.Services.AddDbContext<CmsxDbContext>(o => o.UseNpgsql(connPostgres));
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "CMSX API", Version = "v1" });
-    c.AddServer(new OpenApiServer { Url = "http://localhost:5124" });
+    var swaggerUrl = builder.Configuration["SwaggerServer:Url"] ?? "http://localhost:5124";
+    c.AddServer(new OpenApiServer { Url = swaggerUrl });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name         = "Authorization",
