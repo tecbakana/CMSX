@@ -434,14 +434,14 @@ namespace CMSXData.Migrations
                 name: "modelocomposto",
                 columns: table => new
                 {
-                    ModeloCompostoId = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "NEWID()"),
+                    ModeloCompostoId = table.Column<Guid>(type: "uuid", nullable: false),
                     Aplicacaoid = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Produtoid = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Nome = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     ValorUnitario = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     ConfiguracaoHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Usos = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
-                    Datacriacao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                    Datacriacao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
@@ -511,7 +511,7 @@ namespace CMSXData.Migrations
                 name: "orcamentocabecalho",
                 columns: table => new
                 {
-                    orcamentoid = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "NEWID()"),
+                    orcamentoid = table.Column<Guid>(type: "uuid", nullable: false),
                     aplicacaoid = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     nome = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     email = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
@@ -521,7 +521,7 @@ namespace CMSXData.Migrations
                     prazo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     nomevendedor = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     aprovado = table.Column<bool>(type: "boolean", nullable: false),
-                    datainclusao = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "NOW()")
+                    datainclusao = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
@@ -532,7 +532,7 @@ namespace CMSXData.Migrations
                 name: "pedido",
                 columns: table => new
                 {
-                    pedidoid = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "NEWID()"),
+                    pedidoid = table.Column<Guid>(type: "uuid", nullable: false),
                     aplicacaoid = table.Column<string>(type: "character varying(36)", maxLength: 36, nullable: true),
                     numeropedido = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     clientenome = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
@@ -540,7 +540,7 @@ namespace CMSXData.Migrations
                     valorpedido = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
                     statusatual = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     metodopagamento = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    datainclusao = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "NOW()")
+                    datainclusao = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
@@ -579,11 +579,11 @@ namespace CMSXData.Migrations
                 name: "publictoken",
                 columns: table => new
                 {
-                    publictokenid = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "NEWID()"),
+                    publictokenid = table.Column<Guid>(type: "uuid", nullable: false),
                     token = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     aplicacaoid = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     ativo = table.Column<bool>(type: "boolean", nullable: false),
-                    datainclusao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    datainclusao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     datavencimento = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -810,7 +810,7 @@ namespace CMSXData.Migrations
                 name: "modeloselecao",
                 columns: table => new
                 {
-                    ModeloSelecaoId = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "NEWID()"),
+                    ModeloSelecaoId = table.Column<Guid>(type: "uuid", nullable: false),
                     ModeloCompostoId = table.Column<Guid>(type: "uuid", nullable: false),
                     Atributoid = table.Column<Guid>(type: "uuid", nullable: false),
                     Opcaoid = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false)
@@ -830,7 +830,7 @@ namespace CMSXData.Migrations
                 name: "orcamentodetalhe",
                 columns: table => new
                 {
-                    orcamentodetalheid = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "NEWID()"),
+                    orcamentodetalheid = table.Column<Guid>(type: "uuid", nullable: false),
                     orcamentoid = table.Column<Guid>(type: "uuid", nullable: false),
                     descricao = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     quantidade = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
@@ -852,11 +852,11 @@ namespace CMSXData.Migrations
                 name: "statuspedido",
                 columns: table => new
                 {
-                    statuspedidoid = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "NEWID()"),
+                    statuspedidoid = table.Column<Guid>(type: "uuid", nullable: false),
                     pedidoid = table.Column<Guid>(type: "uuid", nullable: false),
                     status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     descricao = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    datahora = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                    datahora = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
@@ -873,7 +873,7 @@ namespace CMSXData.Migrations
                 name: "orcamentodetalhecomposto",
                 columns: table => new
                 {
-                    OrcamentoDetalheCompostoId = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "NEWID()"),
+                    OrcamentoDetalheCompostoId = table.Column<Guid>(type: "uuid", nullable: false),
                     orcamentoid = table.Column<Guid>(type: "uuid", nullable: false),
                     Produtoid = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Quantidade = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
@@ -882,7 +882,7 @@ namespace CMSXData.Migrations
                     ConfiguracaoJson = table.Column<string>(type: "text", nullable: false),
                     Versao = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
                     Atual = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    Datainclusao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                    Datainclusao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
@@ -905,7 +905,7 @@ namespace CMSXData.Migrations
                 name: "selecao",
                 columns: table => new
                 {
-                    SelecaoId = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "NEWID()"),
+                    SelecaoId = table.Column<Guid>(type: "uuid", nullable: false),
                     OrcamentoDetalheCompostoId = table.Column<Guid>(type: "uuid", nullable: false),
                     Atributoid = table.Column<Guid>(type: "uuid", nullable: false),
                     Opcaoid = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),

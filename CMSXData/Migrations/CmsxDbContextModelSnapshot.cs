@@ -1018,8 +1018,7 @@ namespace CMSXData.Migrations
                     b.Property<Guid>("ModeloCompostoId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("ModeloCompostoId")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnName("ModeloCompostoId");
 
                     b.Property<string>("Aplicacaoid")
                         .IsRequired()
@@ -1037,7 +1036,7 @@ namespace CMSXData.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("Datacriacao")
-                        .HasDefaultValueSql("NOW()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -1077,8 +1076,7 @@ namespace CMSXData.Migrations
                     b.Property<Guid>("ModeloSelecaoId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("ModeloSelecaoId")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnName("ModeloSelecaoId");
 
                     b.Property<Guid>("Atributoid")
                         .HasColumnType("uuid")
@@ -1272,8 +1270,7 @@ namespace CMSXData.Migrations
                     b.Property<Guid>("Orcamentoid")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("orcamentoid")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnName("orcamentoid");
 
                     b.Property<string>("Aplicacaoid")
                         .IsRequired()
@@ -1289,7 +1286,7 @@ namespace CMSXData.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("datainclusao")
-                        .HasDefaultValueSql("NOW()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Descricaoservico")
                         .HasColumnType("text")
@@ -1337,8 +1334,7 @@ namespace CMSXData.Migrations
                     b.Property<Guid>("Orcamentodetalheid")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("orcamentodetalheid")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnName("orcamentodetalheid");
 
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean")
@@ -1377,8 +1373,7 @@ namespace CMSXData.Migrations
                     b.Property<Guid>("OrcamentoDetalheCompostoId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("OrcamentoDetalheCompostoId")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnName("OrcamentoDetalheCompostoId");
 
                     b.Property<bool>("Atual")
                         .ValueGeneratedOnAdd()
@@ -1395,7 +1390,7 @@ namespace CMSXData.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("Datainclusao")
-                        .HasDefaultValueSql("NOW()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<Guid>("Orcamentoid")
                         .HasColumnType("uuid")
@@ -1443,8 +1438,7 @@ namespace CMSXData.Migrations
                     b.Property<Guid>("Pedidoid")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("pedidoid")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnName("pedidoid");
 
                     b.Property<string>("Aplicacaoid")
                         .HasMaxLength(36)
@@ -1465,7 +1459,7 @@ namespace CMSXData.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("datainclusao")
-                        .HasDefaultValueSql("NOW()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("MetodoPagamento")
                         .HasMaxLength(50)
@@ -1583,8 +1577,7 @@ namespace CMSXData.Migrations
                     b.Property<Guid>("PublicTokenId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("publictokenid")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnName("publictokenid");
 
                     b.Property<string>("Aplicacaoid")
                         .IsRequired()
@@ -1600,7 +1593,7 @@ namespace CMSXData.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("datainclusao")
-                        .HasDefaultValueSql("NOW()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<DateTime?>("Datavencimento")
                         .HasColumnType("timestamp with time zone")
@@ -1817,8 +1810,7 @@ namespace CMSXData.Migrations
                     b.Property<Guid>("SelecaoId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("SelecaoId")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnName("SelecaoId");
 
                     b.Property<Guid>("Atributoid")
                         .HasColumnType("uuid")
@@ -1885,14 +1877,13 @@ namespace CMSXData.Migrations
                     b.Property<Guid>("Statuspedidoid")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("statuspedidoid")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnName("statuspedidoid");
 
                     b.Property<DateTime>("Datahora")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("datahora")
-                        .HasDefaultValueSql("NOW()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Descricao")
                         .HasMaxLength(500)

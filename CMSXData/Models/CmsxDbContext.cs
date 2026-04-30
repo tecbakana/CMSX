@@ -607,7 +607,7 @@ public partial class CmsxDbContext : DbContext
         {
             entity.HasKey(e => e.Pedidoid).HasName("pedidoPK");
             entity.ToTable("pedido");
-            entity.Property(e => e.Pedidoid).HasDefaultValueSql("NEWID()").HasColumnName("pedidoid");
+            entity.Property(e => e.Pedidoid).ValueGeneratedOnAdd().HasColumnName("pedidoid");
             entity.Property(e => e.Aplicacaoid).HasMaxLength(36).HasColumnName("aplicacaoid");
             entity.Property(e => e.Numeropedido).HasMaxLength(100).HasColumnName("numeropedido");
             entity.Property(e => e.Clientenome).HasMaxLength(200).HasColumnName("clientenome");
@@ -615,18 +615,18 @@ public partial class CmsxDbContext : DbContext
             entity.Property(e => e.Valorpedido).HasPrecision(12, 2).HasColumnName("valorpedido");
             entity.Property(e => e.Statusatual).HasMaxLength(50).HasColumnName("statusatual");
             entity.Property(e => e.MetodoPagamento).HasMaxLength(50).HasColumnName("metodopagamento");
-            entity.Property(e => e.Datainclusao).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("datainclusao");
+            entity.Property(e => e.Datainclusao).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("datainclusao");
         });
 
         modelBuilder.Entity<Statuspedido>(entity =>
         {
             entity.HasKey(e => e.Statuspedidoid).HasName("statuspedidoPK");
             entity.ToTable("statuspedido");
-            entity.Property(e => e.Statuspedidoid).HasDefaultValueSql("NEWID()").HasColumnName("statuspedidoid");
+            entity.Property(e => e.Statuspedidoid).ValueGeneratedOnAdd().HasColumnName("statuspedidoid");
             entity.Property(e => e.Pedidoid).HasColumnName("pedidoid");
             entity.Property(e => e.Status).HasMaxLength(50).HasColumnName("status");
             entity.Property(e => e.Descricao).HasMaxLength(500).HasColumnName("descricao");
-            entity.Property(e => e.Datahora).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("datahora");
+            entity.Property(e => e.Datahora).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("datahora");
             entity.HasOne(e => e.PedidoNavigation)
                 .WithMany(p => p.Statuspedidos)
                 .HasForeignKey(e => e.Pedidoid)
@@ -637,7 +637,7 @@ public partial class CmsxDbContext : DbContext
         {
             entity.HasKey(e => e.Orcamentoid).HasName("PK_orcamentocabecalho");
             entity.ToTable("orcamentocabecalho");
-            entity.Property(e => e.Orcamentoid).HasDefaultValueSql("NEWID()").HasColumnName("orcamentoid");
+            entity.Property(e => e.Orcamentoid).ValueGeneratedOnAdd().HasColumnName("orcamentoid");
             entity.Property(e => e.Aplicacaoid).HasMaxLength(64).HasColumnName("aplicacaoid");
             entity.Property(e => e.Nome).HasMaxLength(200).HasColumnName("nome");
             entity.Property(e => e.Email).HasMaxLength(200).HasColumnName("email");
@@ -647,14 +647,14 @@ public partial class CmsxDbContext : DbContext
             entity.Property(e => e.Prazo).HasMaxLength(200).HasColumnName("prazo");
             entity.Property(e => e.Nomevendedor).HasMaxLength(200).HasColumnName("nomevendedor");
             entity.Property(e => e.Aprovado).HasColumnName("aprovado");
-            entity.Property(e => e.Datainclusao).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("datainclusao");
+            entity.Property(e => e.Datainclusao).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("datainclusao");
         });
 
         modelBuilder.Entity<OrcamentoDetalhe>(entity =>
         {
             entity.HasKey(e => e.Orcamentodetalheid).HasName("PK_orcamentodetalhe");
             entity.ToTable("orcamentodetalhe");
-            entity.Property(e => e.Orcamentodetalheid).HasDefaultValueSql("NEWID()").HasColumnName("orcamentodetalheid");
+            entity.Property(e => e.Orcamentodetalheid).ValueGeneratedOnAdd().HasColumnName("orcamentodetalheid");
             entity.Property(e => e.Orcamentoid).HasColumnName("orcamentoid");
             entity.Property(e => e.Descricao).HasMaxLength(500).HasColumnName("descricao");
             entity.Property(e => e.Quantidade).HasPrecision(10, 2).HasColumnName("quantidade");
@@ -672,19 +672,19 @@ public partial class CmsxDbContext : DbContext
             entity.ToTable("publictoken");
             entity.HasIndex(e => e.Token).IsUnique().HasDatabaseName("UQ_publictoken_token");
             entity.HasIndex(e => e.Aplicacaoid).HasDatabaseName("IX_publictoken_aplicacaoid");
-            entity.Property(e => e.PublicTokenId).HasDefaultValueSql("NEWID()").HasColumnName("publictokenid");
+            entity.Property(e => e.PublicTokenId).ValueGeneratedOnAdd().HasColumnName("publictokenid");
             entity.Property(e => e.Token).HasMaxLength(100).HasColumnName("token");
             entity.Property(e => e.Aplicacaoid).HasMaxLength(64).HasColumnName("aplicacaoid");
             entity.Property(e => e.Ativo).HasColumnName("ativo");
-            entity.Property(e => e.Datainclusao).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("datainclusao");
-            entity.Property(e => e.Datavencimento).HasColumnType("timestamp with time zone").HasColumnName("datavencimento");
+            entity.Property(e => e.Datainclusao).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("datainclusao");
+            entity.Property(e => e.Datavencimento).HasColumnName("datavencimento");
         });
 
         modelBuilder.Entity<OrcamentoDetalheComposto>(entity =>
         {
             entity.HasKey(e => e.OrcamentoDetalheCompostoId).HasName("PK_orcamentodetalhecomposto");
             entity.ToTable("orcamentodetalhecomposto");
-            entity.Property(e => e.OrcamentoDetalheCompostoId).HasDefaultValueSql("NEWID()").HasColumnName("OrcamentoDetalheCompostoId");
+            entity.Property(e => e.OrcamentoDetalheCompostoId).ValueGeneratedOnAdd().HasColumnName("OrcamentoDetalheCompostoId");
             entity.Property(e => e.Orcamentoid).HasColumnName("orcamentoid");
             entity.Property(e => e.Produtoid).HasMaxLength(64).HasColumnName("Produtoid");
             entity.Property(e => e.Quantidade).HasPrecision(10, 2).HasColumnName("Quantidade");
@@ -693,7 +693,7 @@ public partial class CmsxDbContext : DbContext
             entity.Property(e => e.ConfiguracaoJson).HasColumnName("ConfiguracaoJson");
             entity.Property(e => e.Versao).HasDefaultValue(1).HasColumnName("Versao");
             entity.Property(e => e.Atual).HasDefaultValue(true).HasColumnName("Atual");
-            entity.Property(e => e.Datainclusao).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("Datainclusao");
+            entity.Property(e => e.Datainclusao).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("Datainclusao");
             entity.HasOne(e => e.Cabecalho)
                 .WithMany(c => c.OrcamentoDetalheCompostos)
                 .HasForeignKey(e => e.Orcamentoid)
@@ -710,7 +710,7 @@ public partial class CmsxDbContext : DbContext
         {
             entity.HasKey(e => e.SelecaoId).HasName("PK_selecao");
             entity.ToTable("selecao");
-            entity.Property(e => e.SelecaoId).HasDefaultValueSql("NEWID()").HasColumnName("SelecaoId");
+            entity.Property(e => e.SelecaoId).ValueGeneratedOnAdd().HasColumnName("SelecaoId");
             entity.Property(e => e.OrcamentoDetalheCompostoId).HasColumnName("OrcamentoDetalheCompostoId");
             entity.Property(e => e.Atributoid).HasColumnName("Atributoid");
             entity.Property(e => e.Opcaoid).HasMaxLength(64).HasColumnName("Opcaoid");
@@ -736,21 +736,21 @@ public partial class CmsxDbContext : DbContext
             entity.HasIndex(e => new { e.ConfiguracaoHash, e.Aplicacaoid, e.Produtoid })
                 .IsUnique()
                 .HasDatabaseName("IX_modelocomposto_hash");
-            entity.Property(e => e.ModeloCompostoId).HasDefaultValueSql("NEWID()").HasColumnName("ModeloCompostoId");
+            entity.Property(e => e.ModeloCompostoId).ValueGeneratedOnAdd().HasColumnName("ModeloCompostoId");
             entity.Property(e => e.Aplicacaoid).HasMaxLength(64).HasColumnName("Aplicacaoid");
             entity.Property(e => e.Produtoid).HasMaxLength(64).HasColumnName("Produtoid");
             entity.Property(e => e.Nome).HasMaxLength(500).HasColumnName("Nome");
             entity.Property(e => e.ValorUnitario).HasPrecision(18, 2).HasColumnName("ValorUnitario");
             entity.Property(e => e.ConfiguracaoHash).HasMaxLength(64).HasColumnName("ConfiguracaoHash");
             entity.Property(e => e.Usos).HasDefaultValue(1).HasColumnName("Usos");
-            entity.Property(e => e.Datacriacao).HasDefaultValueSql("NOW()").HasColumnType("timestamp with time zone").HasColumnName("Datacriacao");
+            entity.Property(e => e.Datacriacao).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("Datacriacao");
         });
 
         modelBuilder.Entity<ModeloSelecao>(entity =>
         {
             entity.HasKey(e => e.ModeloSelecaoId).HasName("PK_modeloselecao");
             entity.ToTable("modeloselecao");
-            entity.Property(e => e.ModeloSelecaoId).HasDefaultValueSql("NEWID()").HasColumnName("ModeloSelecaoId");
+            entity.Property(e => e.ModeloSelecaoId).ValueGeneratedOnAdd().HasColumnName("ModeloSelecaoId");
             entity.Property(e => e.ModeloCompostoId).HasColumnName("ModeloCompostoId");
             entity.Property(e => e.Atributoid).HasColumnName("Atributoid");
             entity.Property(e => e.Opcaoid).HasMaxLength(64).HasColumnName("Opcaoid");
